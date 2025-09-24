@@ -1,0 +1,12 @@
+ТАБЛИЧКА ДЛЯ ИНСТРУКЦИЙ НАШЕГО АССЕМБЛЕРА
+
+https://www.cs.cornell.edu/courses/cs3410/2019sp/riscv/interpreter/#
+
+32 бита на одну команду
+3-х адресные команды
+
+ARITHMETICS:
+| add | addr_3-result | addr_2-operand_2 | addr_1-operand_1 | 
+| sub | 
+
+
