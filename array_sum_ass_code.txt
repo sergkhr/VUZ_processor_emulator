@@ -1,0 +1,4 @@
+n 5
+array 3 2 1 4 2
+
+MOV reg1 0

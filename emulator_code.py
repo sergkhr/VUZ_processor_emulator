@@ -1,21 +1,23 @@
 # Регистры памяти
-# Как будто бы можно сделать красивее, но я разучился программировать
-reg1 = 0
-reg2 = 0
-reg3 = 0
-reg4 = 0
-reg5 = 0
-reg6 = 0
-reg7 = 0
-reg8 = 0
-reg9 = 0
-reg10 = 0
-reg11 = 0
-reg12 = 0
-reg13 = 0
-reg14 = 0
-reg15 = 0
-reg16 = 0
+registry = {
+    "reg1" : 0,
+    "reg2" : 0,
+    "reg3" : 0,
+    "reg4" : 0,
+    "reg5" : 0,
+    "reg6" : 0,
+    "reg7" : 0,
+    "reg8" : 0,
+    "reg9" : 0,
+    "reg10" : 0,
+    "reg11" : 0,
+    "reg12" : 0,
+    "reg13" : 0,
+    "reg14" : 0,
+    "reg15" : 0,
+    "reg16" : 0,
+}
+
 
 
 # Флаги
@@ -37,6 +39,10 @@ def call_command(command, res_address, first_operand, second_operand):
             ADD(res_address, first_operand, second_operand)
         case "CMP":
             CMP(first_operand, second_operand)
+        case "JZ":
+            JZ(res_address)
+        case "JNZ":
+            JNZ(res_address)
 
 
 
@@ -65,6 +71,18 @@ def CMP(first_operand, second_operand): # а мы оставляем тут пе
     else:
         ZF = 0
 
+
+def JZ(where_to_jump): # а нам тут надо 3 адреса?
+    global ZF
+    global PC
+    if(ZF == 1):
+        PC = where_to_jump
+
+def JNZ(where_to_jump):
+    global ZF
+    global PC
+    if(ZF == 0):
+        PC = where_to_jump
 
 
 # programm that will be executed on the emulator... probably
