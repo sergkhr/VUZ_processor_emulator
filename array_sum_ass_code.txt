@@ -10,3 +10,5 @@ ADD reg1 reg1 reg3
 ADD reg2 reg2 1
 CMP 0 reg2 n
 JNZ 8
+
+MOV reg16 reg1 0
