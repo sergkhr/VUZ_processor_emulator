@@ -1,0 +1,9 @@
+MOV (where to) (address) (placeholder)
+MOV_OFFSET (where to) (address) (offset)
+
+CMP (placeholder) (first) (second)
+
+reg1 - is for sum
+reg2 - is for iterator
+
+reg16 - is the answer registry
