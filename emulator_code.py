@@ -44,9 +44,9 @@ PC = 1 #1 же?
 def call_command(command, res_address, first_operand, second_operand):
     global command_registry
     match command:
-        case command_registry.get("MOV"):
+        case 0:#command_registry.get("MOV")):
             MOV(res_address, first_operand)
-        case command_registry.get("MOV_OFFSET"):
+        case int(command_registry.get("MOV_OFFSET")):
             MOV_OFFSET(res_address, first_operand, second_operand)
         case command_registry.get("ADD"):
             ADD(res_address, first_operand, second_operand)
@@ -115,6 +115,30 @@ def JNZ(where_to_jump):
 # programm that will be executed on the emulator... probably
 def main():
     global PC # хз как с этой штукой развлекаться
+
+    # берем файл программы на ассемблере
+    file_name = "array_sum_ass_code.txt"
+    
+    # считаем файл асс-кода
+    with open(file_name, "r") as file_ass:
+        ass_code = list(map(lambda line: line.split(' '), file_ass.read().split('\n')))
+        # file_ass_binary = ""
+
+    print(ass_code)
+    
+    # обработка файла асс-кода
+    for line in ass_code:
+        if line == "":
+            continue
+        operation = command_registry.get(line[0], -1)
+        if operation == -1:
+            print("ERR:", line[1:])
+            memory[line[0]] = line[1:]
+            continue
+        print("TypeERR:", operation)
+        call_command(operation, line[1], line[2], line[3])
+    
+    print(registry.get("reg16"))
 
 
 if __name__ == "__main__":
