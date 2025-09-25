@@ -9,6 +9,6 @@ MOV_OFFSET reg3 array reg2
 ADD reg1 reg1 reg3
 ADD reg2 reg2 1
 CMP 0 reg2 n
-JNZ 8
+JNZ 8 0 0
 
 MOV reg16 reg1 0

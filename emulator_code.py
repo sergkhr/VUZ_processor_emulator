@@ -40,13 +40,13 @@ command_registry = {
 
 PC = 1 #1 же?
 
-# Команды
+# Команды (в command нужно класть числа - получаемые из регистра команд)
 def call_command(command, res_address, first_operand, second_operand):
     global command_registry
     match command:
-        case 0:#command_registry.get("MOV")):
+        case command_registry.get("MOV"):
             MOV(res_address, first_operand)
-        case int(command_registry.get("MOV_OFFSET")):
+        case command_registry.get("MOV_OFFSET"):
             MOV_OFFSET(res_address, first_operand, second_operand)
         case command_registry.get("ADD"):
             ADD(res_address, first_operand, second_operand)
