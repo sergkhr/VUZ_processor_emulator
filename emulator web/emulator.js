@@ -76,6 +76,8 @@ let registry = {
 
 let memory = {};
 
+let ass_code;
+
 
 // Флаги
 let ZF = 0;
@@ -92,7 +94,7 @@ let command_registry = {
     "JNZ": 6,
 };
 
-let PC = 1; // 1 же?
+let PC = 0; // 0
 
 
 // Команды (в command нужно класть числа - получаемые из регистра команд)
@@ -163,6 +165,7 @@ function CMP(first_operand, second_operand) { // а мы оставляем ту
     let tmp = getValue(first_operand) - getValue(second_operand);
     // setting flags
     ZF = tmp === 0 ? 1 : 0;
+    console.warn(getValue(first_operand), getValue(second_operand), tmp)
 }
 
 
@@ -232,6 +235,19 @@ function getValue(operand) {
 }
 
 
+// функция шага основного цикла
+function read_line() {
+    console.log(PC, " line");
+    const line = ass_code[PC-1];
+    if (line === "") return 'continue'; //надо проверить делает ли оно вообще свое дело
+    const operation = command_registry[line[0]] ?? -1;
+    if (operation === -1) {
+        memory[line[0]] = line.slice(1).map(str => parseInt(str, 10));
+        return 'continue';
+    }
+    call_command(operation, line[1], line[2], line[3]);
+
+
 function runCode() {
     const fileInput = document.getElementById("fileInput");
     const file = fileInput.files[0];
@@ -270,6 +286,30 @@ function runCode() {
 
         output.textContent = `Значение регистра reg16: ${registry["reg16"]}`;
     };
+
+
+    // Сброс регистров и памяти перед выполнением
+    for (let key in registry) registry[key] = 0;
+    for (let key in memory) delete memory[key];
+    ZF = 0;
+    PC = 1;
+    
+    
+    // Основной цикл выполнения
+    // for (const line of ass_code) {
+    //     if (line === "") continue; //надо проверить делает ли оно вообще свое дело
+    //     const operation = command_registry[line[0]] ?? -1;
+    //     if (operation === -1) {
+    //         memory[line[0]] = line.slice(1).map(str => parseInt(str, 10));
+    //         continue;
+    //     }
+    //     call_command(operation, line[1], line[2], line[3]);
+    // }
+    console.warn(ass_code.length);
+    
+    }
+
+    output.textContent = `Значение регистра reg16: ${registry["reg16"]}`;
 
     reader.readAsText(file);
     console.log(registry);
