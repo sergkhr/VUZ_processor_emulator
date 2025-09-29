@@ -1,6 +1,9 @@
+let executionSpeed;
+
 $(document).ready(function () {
     initRegistryTable();
     initMemoryTable();
+    $('#executeLineBtn').prop('disabled', true);
 });
 
 
@@ -49,6 +52,19 @@ function updateTables(){
     initMemoryTable();
 }
 
+
+function processExecSpeed(){
+    // Чтение speedInput
+    executionSpeed = parseFloat(document.getElementById("speedInput").value);
+    if (isNaN(executionSpeed) || executionSpeed < 0) executionSpeed = 0;
+
+    // Блокируем кнопку если нужен автозапуск
+    if (executionSpeed > 0) {
+        $('#executeLineBtn').prop('disabled', true);
+    } else {
+        $('#executeLineBtn').prop('disabled', false);
+    }
+}
 
 
 
@@ -142,11 +158,13 @@ function type_transformer(param, type) {
 function MOV(res_address, operand) {
     // registry[res_address] = typeof operand === "string" ? registry[operand] : operand;
     registry[res_address] = getValue(operand);
+    PC++;
 }
 
 
 function MOV_OFFSET(res_address, operand, offset) {
     registry[res_address] = getValue(operand)[getValue(offset)]; // возможен конфликт, если operand — строка
+    PC++;
 }
 
 
@@ -158,6 +176,7 @@ function ADD(res_address, first_operand, second_operand) {
     // else ZF = 0;
     ZF = tmp === 0 ? 1 : 0; // говорят тернарный чуть более эффективен)
     registry[res_address] = tmp;
+    PC++;
 }
 
 
@@ -165,7 +184,7 @@ function CMP(first_operand, second_operand) { // а мы оставляем ту
     let tmp = getValue(first_operand) - getValue(second_operand);
     // setting flags
     ZF = tmp === 0 ? 1 : 0;
-    console.warn(getValue(first_operand), getValue(second_operand), tmp)
+    PC++;
 }
 
 
@@ -177,47 +196,15 @@ function JMP(where_to_jump) {
 function JZ(where_to_jump) { 
     if (ZF === 1) {
         PC = parseInt(where_to_jump);
-    }
+    } else PC++;
 }
 
 
 function JNZ(where_to_jump) {
     if (ZF === 0) {
         PC = parseInt(where_to_jump);
-    }
+    } else PC++;
 }
-
-
-// programm that will be executed on the emulator... probably
-// function main() {
-//     // берем файл программы на ассемблере
-//     const file_name = "array_sum_ass_code.txt";
-
-//     const fs = require("fs");
-
-//     // считаем файл асс-кода
-//     const raw = fs.readFileSync(file_name, "utf8");
-//     const ass_code = raw.split('\n').map(line => line.trim().split(' '));
-
-//     console.log(ass_code);
-
-//     // обработка файла асс-кода
-//     for (const line of ass_code) {
-//         if (line[0] === "") continue;
-//         const operation = command_registry[line[0]] ?? -1;
-//         if (operation === -1) {
-//             console.log("ERR:", line.slice(1));
-//             memory[line[0]] = line.slice(1);
-//             continue;
-//         }
-//         console.log("TypeERR:", operation);
-//         // передаём аргументы, даже если их может быть меньше
-//         call_command(operation, line[1], line[2], line[3]);
-//     }
-
-//     console.log(registry["reg16"]);
-// }
-
 
 // Этот getValue хорош, I approve - irvindt
 // В целом все надо переписать через getValue
@@ -235,23 +222,38 @@ function getValue(operand) {
 }
 
 
+let reading_by_line = false;
 // функция шага основного цикла
 function read_line() {
     console.log(PC, " line");
+    if(reading_by_line && PC-1 >= ass_code.length){
+        output.textContent = `Значение регистра reg16: ${registry["reg16"]}`;
+        $('#executeLineBtn').prop('disabled', true);
+    }
+
     const line = ass_code[PC-1];
-    if (line === "") return 'continue'; //надо проверить делает ли оно вообще свое дело
+    if (line === ""){
+        PC++; // такое только если мы не доходим до call_cpmand, и да, это костыль
+        return 'continue'; //надо проверить делает ли оно вообще свое дело
+    }
     const operation = command_registry[line[0]] ?? -1;
     if (operation === -1) {
         memory[line[0]] = line.slice(1).map(str => parseInt(str, 10));
+        PC++;
         return 'continue';
     }
     call_command(operation, line[1], line[2], line[3]);
+
+    updateTables();
+}
 
 
 function runCode() {
     const fileInput = document.getElementById("fileInput");
     const file = fileInput.files[0];
     const output = document.getElementById("output");
+
+    processExecSpeed();
 
     if (!file) {
         output.textContent = "Файл не выбран.";
@@ -261,8 +263,9 @@ function runCode() {
     const reader = new FileReader();
     reader.onload = function (e) {
         const raw = e.target.result;
-        const ass_code = raw.split('\n').map(line => line.trim().split(' '));
-
+        ass_code = raw.split('\n').map(line => line.trim().split(' '));    
+        console.log(ass_code);
+        
         // Сброс регистров и памяти перед выполнением
         for (let key in registry) registry[key] = 0;
         for (let key in memory) delete memory[key];
@@ -272,48 +275,38 @@ function runCode() {
         updateTables();
 
         // Основной цикл выполнения
-        for (const line of ass_code) {
-            if (line === "") continue; //надо проверить делает ли оно вообще свое дело
-            const operation = command_registry[line[0]] ?? -1;
-            if (operation === -1) {
-                memory[line[0]] = line.slice(1).map(str => parseInt(str, 10));
-                continue;
+        
+        async function asyncCall(){
+            while (PC-1 < ass_code.length) {
+                // console.log("exec speed " + executionSpeed);
+                if (executionSpeed > 0) {
+                    // console.log("time to read");
+                    const delay = 1000 / executionSpeed;
+                    const sleep = (duration) => {
+                        return new Promise(resolve => setTimeout(resolve, duration));
+                    }
+                    read_line();
+                    await sleep(delay);
+                }
             }
-            call_command(operation, line[1], line[2], line[3]);
+    
+            output.textContent = `Значение регистра reg16: ${registry["reg16"]}`;
+    
+            console.warn(ass_code.length);
             
-            updateTables();
+            console.log(registry);
+            console.log(memory);
+            $('#executeLineBtn').prop('disabled', true);
         }
 
-        output.textContent = `Значение регистра reg16: ${registry["reg16"]}`;
+        if(executionSpeed > 0){
+            reading_by_line = false;
+            asyncCall();
+        }else{
+            reading_by_line = true;
+        }
     };
-
-
-    // Сброс регистров и памяти перед выполнением
-    for (let key in registry) registry[key] = 0;
-    for (let key in memory) delete memory[key];
-    ZF = 0;
-    PC = 1;
-    
-    
-    // Основной цикл выполнения
-    // for (const line of ass_code) {
-    //     if (line === "") continue; //надо проверить делает ли оно вообще свое дело
-    //     const operation = command_registry[line[0]] ?? -1;
-    //     if (operation === -1) {
-    //         memory[line[0]] = line.slice(1).map(str => parseInt(str, 10));
-    //         continue;
-    //     }
-    //     call_command(operation, line[1], line[2], line[3]);
-    // }
-    console.warn(ass_code.length);
-    
-    }
-
-    output.textContent = `Значение регистра reg16: ${registry["reg16"]}`;
-
-    reader.readAsText(file);
-    console.log(registry);
-    console.log(memory)
+    reader.readAsText(file);  
 }
 
 // main();
