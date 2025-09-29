@@ -1,3 +1,59 @@
+$(document).ready(function () {
+    initRegistryTable();
+    initMemoryTable();
+});
+
+
+function initRegistryTable() {
+    const $table = $('#registry-table');
+    $table.empty(); // очищаем на всякий случай
+
+    for (const [name, value] of Object.entries(registry)) {
+        // const $li = $('<li></li>');
+        const $nameSpan = $('<span class="registry-name"></span>').text(name);
+        const $dataSpan = $('<span class="registry-data"></span>').text(value).attr('data-registry-key', name);
+
+        // $li.append($nameSpan).append($dataSpan);
+        $table.append($nameSpan).append($dataSpan);
+    }
+}
+
+function updateRegistryTable() {
+    for (const [name, value] of Object.entries(registry)) {
+        $(`#registry-table>.registry-data[data-registry-key="${name}"]`).text(value);
+    }
+}
+
+function initMemoryTable() {
+    const $table = $('#memory-table');
+    $table.empty(); // очищаем на всякий случай
+
+    for (const [name, value] of Object.entries(memory)) {
+        // const $li = $('<li></li>');
+        const $nameSpan = $('<span class="registry-name"></span>').text(name);
+        const $dataSpan = $('<span class="registry-data"></span>').text(value).attr('data-registry-key', name);
+
+        // $li.append($nameSpan).append($dataSpan);
+        $table.append($nameSpan).append($dataSpan);
+    }
+}
+
+function updateMemoryTable() {
+    for (const [name, value] of Object.entries(memory)) {
+        $(`#memory-table>.registry-data[data-registry-key="${name}"]`).text(value);
+    }
+}
+
+function updateTables(){
+    updateRegistryTable();
+    initMemoryTable();
+}
+
+
+
+
+// Дальше бога нет (эмулятор)
+
 // Регистры памяти
 let registry = {
     "reg1": 0,
@@ -197,6 +253,8 @@ function runCode() {
         ZF = 0;
         PC = 1;
 
+        updateTables();
+
         // Основной цикл выполнения
         for (const line of ass_code) {
             if (line === "") continue; //надо проверить делает ли оно вообще свое дело
@@ -206,6 +264,8 @@ function runCode() {
                 continue;
             }
             call_command(operation, line[1], line[2], line[3]);
+            
+            updateTables();
         }
 
         output.textContent = `Значение регистра reg16: ${registry["reg16"]}`;
@@ -217,3 +277,4 @@ function runCode() {
 }
 
 // main();
+

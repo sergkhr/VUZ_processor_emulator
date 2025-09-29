@@ -1,0 +1,29 @@
+html, body{
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    font-size: 20px;
+}
+
+main{
+    display: flex;
+    #interface-container{
+        flex-grow: 2;
+        width: 100%;
+    }
+    #interface-registry{
+        flex-grow: 1;
+        width: 100%;
+        background-color: aliceblue;
+        ul{
+            display: inline-grid;
+            grid-template-columns: auto auto;
+            width: fit-content;
+            span{
+                border: 1px solid black;
+                min-width: 100px;
+                min-height: 30px;
+            }
+        }
+    }
+}

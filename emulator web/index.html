@@ -5,14 +5,27 @@
         <title>emulator</title>
     </head>
     <body>
-        <section id="interface-container">
-            <input type="file" id="fileInput" />
-            <button onclick="runCode()">Выполнить</button>
-            <pre id="output"></pre>
-
-        </section>
-
-        <script src="emulator.js"></script>
+        <main>
+            <section id="interface-container">
+                <input type="file" id="fileInput" />
+                <button onclick="runCode()">Выполнить</button>
+                <pre id="output"></pre>
+    
+            </section>
+            <aside id="interface-registry">
+                <h3>Регистры</h3>
+                <ul id="registry-table">
+                    <span class="registry-name"></span>
+                    <span class="registry-data"></span>
+                </ul>
+                <ul id="memory-table">
+                    <span class="registry-name"></span>
+                    <span class="registry-data"></span>
+                </ul>
+            </aside>
+        </main>
+        
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+        <script src="emulator.js"></script>
     </body>
 </html>
