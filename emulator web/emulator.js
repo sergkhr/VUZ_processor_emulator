@@ -69,14 +69,26 @@ function call_command(command, res_address, first_operand, second_operand) {
 }
 
 
+function type_transformer(param, type) {
+    let res;
+    if (type == 'string') {
+        res = param.toString();
+    }
+    else if (type == 'number') {
+        res = +param
+    }
+    return res
+}
+
+
 function MOV(res_address, operand) {
     // registry[res_address] = typeof operand === "string" ? registry[operand] : operand;
-    registry[res_address] = operand;
+    registry[res_address] = getValue(operand);
 }
 
 
 function MOV_OFFSET(res_address, operand, offset) {
-    registry[res_address] = operand[offset]; // возможен конфликт, если operand — строка
+    registry[res_address] = getValue(operand)[getValue(offset)]; // возможен конфликт, если operand — строка
 }
 
 
@@ -156,7 +168,10 @@ function getValue(operand) {
     if (operand in registry) {
         return registry[operand];
     }
-    const num = parseInt(operand);
+    if (operand in memory) {
+        return memory[operand];
+    }
+    const num = +operand;
     return isNaN(num) ? 0 : num;
 }
 
@@ -187,7 +202,7 @@ function runCode() {
             if (line === "") continue; //надо проверить делает ли оно вообще свое дело
             const operation = command_registry[line[0]] ?? -1;
             if (operation === -1) {
-                memory[line[0]] = line.slice(1);
+                memory[line[0]] = line.slice(1).map(str => parseInt(str, 10));
                 continue;
             }
             call_command(operation, line[1], line[2], line[3]);
@@ -197,6 +212,8 @@ function runCode() {
     };
 
     reader.readAsText(file);
+    console.log(registry);
+    console.log(memory)
 }
 
 // main();
