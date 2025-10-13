@@ -7,10 +7,13 @@
 
 let registry = {};      // Регистры "процессора"
 let memory = {};        // Память для данных
+let mark_registry = {}; // Регистр меток для переходов
 let PC = 0;             // 0
 
 // Флаги
-let ZF = 0;             // Флаг нуля (Zero Flag)
+let flag_registry = {
+    "ZF": 0,            // Флаг нуля (Zero Flag)
+}            
 
 let ass_code = [];      // Массив с кодом ассемблера по строкам
 let speed = 0;          // Шагов (строк) программы в секунду
@@ -20,12 +23,13 @@ let timeoutId = null;   // id таймера
 // Регистры команд
 let command_registry = {
     "MOV": 0,
-    "MOV_OFFSET": 1,
+    "MOV_MEM_OFFSET": 1,
     "ADD": 2,
     "CMP": 3,
     "JMP": 4,
     "JZ": 5,
     "JNZ": 6,
+    "MARK": 7,
 };
 
 
@@ -82,7 +86,10 @@ function resetRegMemFlagPC() {
         "reg16": 0
     };
     memory = {};
-    ZF = 0;
+    mark_registry = {};
+    flag_registry = {
+        "ZF": 0,
+    };
     PC = 0;
 }
 
@@ -129,14 +136,24 @@ function reset() {
 function updateStateTables() {
     const regTable = document.getElementById('registry-table');
     const memTable = document.getElementById('memory-table');
+    const flagTable = document.getElementById('flags-table');
+    const markTable = document.getElementById('marks-table');
     regTable.innerHTML = '';
     memTable.innerHTML = '';
+    flagTable.innerHTML = '';
+    markTable.innerHTML = '';
 
     for (const [name, value] of Object.entries(registry)) {
         regTable.innerHTML += `<span class="state-name">${name}:</span><span class="state-data">${value}</span>`;
     }
     for (const [name, value] of Object.entries(memory)) {
         memTable.innerHTML += `<span class="state-name">${name}:</span><span class="state-data">${value}</span>`;
+    }
+    for (const [name, value] of Object.entries(flag_registry)) {
+        flagTable.innerHTML += `<span class="state-name">${name}:</span><span class="state-data">${value}</span>`;
+    }
+    for (const [name, value] of Object.entries(mark_registry)) {
+        markTable.innerHTML += `<span class="state-name">${name}:</span><span class="state-data">${value}</span>`;
     }
 }
 
@@ -317,12 +334,14 @@ function call_command(command, res_op1, op2, op3) {
     const old_PC = PC;
     switch (command) {
         case command_registry["MOV"]: MOV(res_op1, op2); break;
-        case command_registry["MOV_OFFSET"]: MOV_OFFSET(res_op1, op2, op3); break;
+        // case command_registry["MOV_OFFSET"]: MOV_OFFSET(res_op1, op2, op3); break;
         case command_registry["ADD"]: ADD(res_op1, op2, op3); break;
         case command_registry["CMP"]: CMP(op2, op3); break;
         case command_registry["JMP"]: JMP(res_op1); break;
         case command_registry["JZ"]:  JZ(res_op1); break;
         case command_registry["JNZ"]: JNZ(res_op1); break;
+        case command_registry["MOV_MEM_OFFSET"]: MOV_MEM_OFFSET(res_op1, op2, op3); break;
+        case command_registry["MARK"]: MARK(res_op1); break;
         default:
             console.error("Unknown command:", command);
     }
@@ -355,33 +374,59 @@ function MOV(res_op1, op2) {
     registry[res_op1] = getValue(op2);
 }
 
+function MOV_MEM_OFFSET(res_op1, memory_op2, offset_op3) {
+    if (memory_op2 in memory){
+        let array = memory[memory_op2].trim().split(' ')
+        registry[res_op1] = getValue(array[getValue(offset_op3)]);
+    }
+    else registry[res_op1] = getValue(memory_op2)
+}
+
 function ADD(res_op1, op2, op3) {
     let result = getValue(op2) + getValue(op3);
     registry[res_op1] = result;
-    ZF = (result === 0) ? 1 : 0;
+    flag_registry["ZF"] = (result === 0) ? 1 : 0;
 }
 
 function CMP(op2, op3) {
     let result = getValue(op2) - getValue(op3);
-    ZF = (result === 0) ? 1 : 0;
+    flag_registry["ZF"] = (result === 0) ? 1 : 0;
 }
 
+
+// PC++ after successfull jump i needed to not execute the MARK command again
 function JMP(where_to_jump) {
-    PC = parseInt(where_to_jump, 10) - 1;
+    if(where_to_jump in mark_registry){
+        let jump_pos = mark_registry[where_to_jump];
+        PC = parseInt(jump_pos, 10);
+    } 
+    PC++;
 }
 
 function JZ(where_to_jump) {
-    if (ZF === 1) {
-        PC = parseInt(where_to_jump, 10);
+    if (flag_registry["ZF"] === 1) {
+        if(where_to_jump in mark_registry){
+            let jump_pos = mark_registry[where_to_jump];
+            PC = parseInt(jump_pos, 10);
+        } 
+        PC++;
     } else {
         PC++;
     }
 }
 
 function JNZ(where_to_jump) {
-    if (ZF === 0) {
-        PC = parseInt(where_to_jump, 10);
+    if (flag_registry["ZF"] === 0) {
+        if(where_to_jump in mark_registry){
+            let jump_pos = mark_registry[where_to_jump];
+            PC = parseInt(jump_pos, 10);
+        } 
+        PC++;
     } else {
         PC++;
     }
+}
+
+function MARK(mark_name) {
+    mark_registry[mark_name] = PC;
 }
