@@ -1,103 +1,21 @@
-let executionSpeed;
-
-$(document).ready(function () {
-    initRegistryTable();
-    initMemoryTable();
-    $('#executeLineBtn').prop('disabled', true);
-});
-
-
-function initRegistryTable() {
-    const $table = $('#registry-table');
-    $table.empty(); // очищаем на всякий случай
-
-    for (const [name, value] of Object.entries(registry)) {
-        // const $li = $('<li></li>');
-        const $nameSpan = $('<span class="registry-name"></span>').text(name);
-        const $dataSpan = $('<span class="registry-data"></span>').text(value).attr('data-registry-key', name);
-
-        // $li.append($nameSpan).append($dataSpan);
-        $table.append($nameSpan).append($dataSpan);
-    }
-}
-
-function updateRegistryTable() {
-    for (const [name, value] of Object.entries(registry)) {
-        $(`#registry-table>.registry-data[data-registry-key="${name}"]`).text(value);
-    }
-}
-
-function initMemoryTable() {
-    const $table = $('#memory-table');
-    $table.empty(); // очищаем на всякий случай
-
-    for (const [name, value] of Object.entries(memory)) {
-        // const $li = $('<li></li>');
-        const $nameSpan = $('<span class="registry-name"></span>').text(name);
-        const $dataSpan = $('<span class="registry-data"></span>').text(value).attr('data-registry-key', name);
-
-        // $li.append($nameSpan).append($dataSpan);
-        $table.append($nameSpan).append($dataSpan);
-    }
-}
-
-function updateMemoryTable() {
-    for (const [name, value] of Object.entries(memory)) {
-        $(`#memory-table>.registry-data[data-registry-key="${name}"]`).text(value);
-    }
-}
-
-function updateTables(){
-    updateRegistryTable();
-    initMemoryTable();
-}
-
-
-function processExecSpeed(){
-    // Чтение speedInput
-    executionSpeed = parseFloat(document.getElementById("speedInput").value);
-    if (isNaN(executionSpeed) || executionSpeed < 0) executionSpeed = 0;
-
-    // Блокируем кнопку если нужен автозапуск
-    if (executionSpeed > 0) {
-        $('#executeLineBtn').prop('disabled', true);
-    } else {
-        $('#executeLineBtn').prop('disabled', false);
-    }
-}
-
-
-
 // Дальше бога нет (эмулятор)
+// или иначе
+// ====================================================
+//              ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
+// ====================================================
 
-// Регистры памяти
-let registry = {
-    "reg1": 0,
-    "reg2": 0,
-    "reg3": 0,
-    "reg4": 0,
-    "reg5": 0,
-    "reg6": 0,
-    "reg7": 0,
-    "reg8": 0,
-    "reg9": 0,
-    "reg10": 0,
-    "reg11": 0,
-    "reg12": 0,
-    "reg13": 0,
-    "reg14": 0,
-    "reg15": 0,
-    "reg16": 0,
-};
 
-let memory = {};
-
-let ass_code;
-
+let registry = {};      // Регистры "процессора"
+let memory = {};        // Память для данных
+let PC = 0;             // 0
 
 // Флаги
-let ZF = 0;
+let ZF = 0;             // Флаг нуля (Zero Flag)
 
+let ass_code = [];      // Массив с кодом ассемблера по строкам
+let speed = 0;          // Шагов (строк) программы в секунду
+let isRunning = false;  // Флаг режима выполнения кода по шагам
+let timeoutId = null;   // id таймера
 
 // Регистры команд
 let command_registry = {
@@ -110,204 +28,360 @@ let command_registry = {
     "JNZ": 6,
 };
 
-let PC = 0; // 0
+
+// ====================================================
+//              ИНИЦИАЛИЗАЦИЯ
+// ====================================================
 
 
-// Команды (в command нужно класть числа - получаемые из регистра команд)
-function call_command(command, res_address, first_operand, second_operand) {
-    switch (command) {
-        case command_registry["MOV"]:
-            MOV(res_address, first_operand);
-            break;
-        case command_registry["MOV_OFFSET"]:
-            MOV_OFFSET(res_address, first_operand, second_operand);
-            break;
-        case command_registry["ADD"]:
-            ADD(res_address, first_operand, second_operand);
-            break;
-        case command_registry["CMP"]:
-            CMP(first_operand, second_operand);
-            break;
-        case command_registry["JMP"]:
-            JMP(res_address);
-            break;
-        case command_registry["JZ"]:
-            JZ(res_address);
-            break;
-        case command_registry["JNZ"]:
-            JNZ(res_address);
-            break;
-        default:
-            console.log("ERROR, lohundra\n" + command + " PC: " + PC);
+document.addEventListener('DOMContentLoaded', () => {
+
+    // ссылки на кнопки
+    const runBtn     = document.getElementById('runBtn');
+    const stepBtn    = document.getElementById('stepBtn');
+    const resetBtn   = document.getElementById('resetBtn');
+    const speedInput = document.getElementById('speedInput');
+    const codeInput = document.getElementById('codeInput');
+
+    // обработчики событий
+    runBtn.addEventListener('click', runCode);
+    stepBtn.addEventListener('click', executeStep);
+    resetBtn.addEventListener('click', reset);
+    speedInput.addEventListener('change', processExecSpeed);
+    codeInput.addEventListener('scroll', syncScroll);
+
+    // сбрасываем все состояния
+    reset();
+})
+
+
+/**
+ * Сброс:
+ * - регистров,
+ * - памяти,
+ * - флагов,
+ * - счетчика команд.
+ */
+function resetRegMemFlagPC() {
+    registry = {
+        "reg1": 0,
+        "reg2": 0,
+        "reg3": 0,
+        "reg4": 0,
+        "reg5": 0,
+        "reg6": 0,
+        "reg7": 0,
+        "reg8": 0,
+        "reg9": 0,
+        "reg10": 0,
+        "reg11": 0,
+        "reg12": 0,
+        "reg13": 0,
+        "reg14": 0,
+        "reg15": 0,
+        "reg16": 0
+    };
+    memory = {};
+    ZF = 0;
+    PC = 0;
+}
+
+
+/**
+ * Полный сброс состояний эмулятора и интерфейса
+ */
+function reset() {
+    if (timeoutId) {
+        clearTimeout(timeoutId);
+        // timeoutId = null;
     }
-}
+    isRunning = false;
 
+    // Сброс состояний "процессора"
+    resetRegMemFlagPC();
+    ass_code = [];
 
-function type_transformer(param, type) {
-    let res;
-    if (type == 'string') {
-        res = param.toString();
-    }
-    else if (type == 'number') {
-        res = +param
-    }
-    return res
-}
+    // Сброс интерфейса
+    const codeInput = document.getElementById('codeInput');
+    // codeInput.value = "MOV reg1 10\nMOV reg2 5 0\nADD reg3 reg1 reg2\nCMP 0 reg3 15\nJZ 5 0 0\nJMP 6 0 0\nMOV reg4 1 0";
+    
+    codeInput.readOnly = false; // можем редактировать асс-код
+    highlightCurrentLine(-1);   // убираем подсветку
+    
+    document.getElementById('output').textContent = 'Program ready. Please, enter "Run".';
 
+    updateStateTables();
+    setButtonsDisabled(false);
 
-function MOV(res_address, operand) {
-    // registry[res_address] = typeof operand === "string" ? registry[operand] : operand;
-    registry[res_address] = getValue(operand);
-    PC++;
-}
-
-
-function MOV_OFFSET(res_address, operand, offset) {
-    registry[res_address] = getValue(operand)[getValue(offset)]; // возможен конфликт, если operand — строка
-    PC++;
-}
-
-
-// Для АЛУ
-function ADD(res_address, first_operand, second_operand) {
-    let tmp = getValue(first_operand) + getValue(second_operand);
-    // setting flags
-    // if(tmp === 0) ZF = 1;
-    // else ZF = 0;
-    ZF = tmp === 0 ? 1 : 0; // говорят тернарный чуть более эффективен)
-    registry[res_address] = tmp;
-    PC++;
-}
-
-
-function CMP(first_operand, second_operand) { // а мы оставляем тут первый адрес или нет?
-    let tmp = getValue(first_operand) - getValue(second_operand);
-    // setting flags
-    ZF = tmp === 0 ? 1 : 0;
-    PC++;
-}
-
-
-function JMP(where_to_jump) {
-    PC = parseInt(where_to_jump);
-}
-
-
-function JZ(where_to_jump) { 
-    if (ZF === 1) {
-        PC = parseInt(where_to_jump);
-    } else PC++;
-}
-
-
-function JNZ(where_to_jump) {
-    if (ZF === 0) {
-        PC = parseInt(where_to_jump);
-    } else PC++;
-}
-
-// Этот getValue хорош, I approve - irvindt
-// В целом все надо переписать через getValue
-
-// Вспомогательная функция
-function getValue(operand) {
-    if (operand in registry) {
-        return registry[operand];
-    }
-    if (operand in memory) {
-        return memory[operand];
-    }
-    const num = +operand;
-    return isNaN(num) ? 0 : num;
-}
-
-
-let reading_by_line = false;
-// функция шага основного цикла
-function read_line() {
-    console.log(PC, " line");
-    if(reading_by_line && PC-1 >= ass_code.length){
-        output.textContent = `Значение регистра reg16: ${registry["reg16"]}`;
-        $('#executeLineBtn').prop('disabled', true);
-    }
-
-    const line = ass_code[PC-1];
-    if (line === ""){
-        PC++; // такое только если мы не доходим до call_cpmand, и да, это костыль
-        return 'continue'; //надо проверить делает ли оно вообще свое дело
-    }
-    const operation = command_registry[line[0]] ?? -1;
-    if (operation === -1) {
-        memory[line[0]] = line.slice(1).map(str => parseInt(str, 10));
-        PC++;
-        return 'continue';
-    }
-    call_command(operation, line[1], line[2], line[3]);
-
-    updateTables();
-}
-
-
-function runCode() {
-    const fileInput = document.getElementById("fileInput");
-    const file = fileInput.files[0];
-    const output = document.getElementById("output");
-
+    // TODO: устанавливаем правильное состояние кнопки "Шаг"
     processExecSpeed();
+}
 
-    if (!file) {
-        output.textContent = "Файл не выбран.";
+
+// ====================================================
+//              ОБНОВЛЕНИЕ ИНТЕРФЕЙСА
+// ====================================================
+
+
+/**
+ * Создание/обновление таблиц регистров и памяти
+ */
+function updateStateTables() {
+    const regTable = document.getElementById('registry-table');
+    const memTable = document.getElementById('memory-table');
+    regTable.innerHTML = '';
+    memTable.innerHTML = '';
+
+    for (const [name, value] of Object.entries(registry)) {
+        regTable.innerHTML += `<span class="state-name">${name}:</span><span class="state-data">${value}</span>`;
+    }
+    for (const [name, value] of Object.entries(memory)) {
+        memTable.innerHTML += `<span class="state-name">${name}:</span><span class="state-data">${value}</span>`;
+    }
+}
+
+
+/**
+ * Подсветка выполнЯЕМОЙ строки кода (== PC)
+ */
+function highlightCurrentLine(lineNumber) {
+    const codeInput = document.getElementById('codeInput');
+    const highlighter = document.getElementById('highlighter');
+    
+    if (lineNumber < 0) {
+        highlighter.style.display = 'none';
+        return
+    }
+
+    const lineHeight = parseFloat(getComputedStyle(codeInput).lineHeight);
+    const newTop = lineNumber * lineHeight + 17; // padding-top=15 + для-красоты=2
+
+    highlighter.style.top = `${newTop}px`;
+    highlighter.style.display = 'block';
+    //TODO: добавить после подсветки строки асс-кода подсветку измененного регистра или памяти
+}
+
+/**
+ * Синхронизация позиции подсветки при скорлле
+ */
+function syncScroll() {
+    // TODO: есть баги, подсветка отображается у невидимых строк
+    const codeInput = document.getElementById('codeInput');
+    const highlighter = document.getElementById('highlighter');
+
+    highlighter.style.transform = `translateY(-${codeInput.scrollTop}px)`;
+}
+
+
+// ====================================================
+//              ЛОГИКА УПРАВЛЕНИЯ ВЫПОЛНЕНИЕМ
+// ====================================================
+
+
+/**
+ * Главная функция выполнения программы
+ */
+function runCode() {
+    // 1. Парсим код из textarea
+    const rawCode = document.getElementById('codeInput').value;
+    if (!rawCode) {
+        document.getElementById('output').textContent = "ERROR: The code field is empty!";
+        return false;
+    }
+    ass_code = rawCode.split('\n')
+        // .map(line => line.split(';')[0].trim()) // убираем комментарии и пробелы
+        // .filter(line => line)                   // убираем пустые строки
+        .map(line => line.split(/\s+/));        // разделяем по пробелам
+    
+    if (ass_code.length === 0) {
+        document.getElementById('output').textContent = "ERROR: No instruction was found!";
+        return false;
+    }
+
+    // 2. Сбрасываем состояния эмулятора, но не код, подсвечиваем, блочим на редактирование
+    resetRegMemFlagPC();
+    updateStateTables();
+    highlightCurrentLine(0); // начало подсветки
+    document.getElementById('codeInput').readOnly = true;
+
+    // 3. Выполняеммммм
+    if (getExecSpeed() > 0) {
+        isRunning = true;
+        // Блочим кнопки, пока прога выполняется
+        setButtonsDisabled(true);
+        executeAutomatically();
+    } else {
+        document.getElementById('output').textContent = 'Step-by-step mode. Click the "Next step".';
+    }
+
+    return true;
+}
+
+
+/**
+ * Выполнение одного шага программы && обновление UI
+ */
+function executeStep() {
+    if (ass_code.length === 0) {
+        const codeLoaded = runCode();
+        if (codeLoaded && isRunning) {}
+        return;
+    }
+    if (PC >= ass_code.length) {
+        document.getElementById('output').textContent = "The program is completed!";
+        document.getElementById('stepBtn').disabled = true;
+        document.getElementById('resetBtn').disabled = false;
+        document.getElementById('runBtn').disabled = false;
+        document.getElementById('codeInput').readOnly = false;
+        highlightCurrentLine(-1);
+        // isRunning = false;
         return;
     }
 
-    const reader = new FileReader();
-    reader.onload = function (e) {
-        const raw = e.target.result;
-        ass_code = raw.split('\n').map(line => line.trim().split(' '));    
-        console.log(ass_code);
-        
-        // Сброс регистров и памяти перед выполнением
-        for (let key in registry) registry[key] = 0;
-        for (let key in memory) delete memory[key];
-        ZF = 0;
-        PC = 1;
-
-        updateTables();
-
-        // Основной цикл выполнения
-        
-        async function asyncCall(){
-            while (PC-1 < ass_code.length) {
-                // console.log("exec speed " + executionSpeed);
-                if (executionSpeed > 0) {
-                    // console.log("time to read");
-                    const delay = 1000 / executionSpeed;
-                    const sleep = (duration) => {
-                        return new Promise(resolve => setTimeout(resolve, duration));
-                    }
-                    read_line();
-                    await sleep(delay);
-                }
-            }
+    const line = ass_code[PC];
+    const operation = line[0].toUpperCase();
     
-            output.textContent = `Значение регистра reg16: ${registry["reg16"]}`;
-    
-            console.warn(ass_code.length);
-            
-            console.log(registry);
-            console.log(memory);
-            $('#executeLineBtn').prop('disabled', true);
-        }
+    // Существует команда или данные?? Иначе данные
+    if (operation === '') {
+        PC++;
+    } else if (operation in command_registry) {
+        const command = command_registry[operation];
+        call_command(command, line[1], line[2], line[3]);
+    } else {
+        memory[line[0]] = line.slice(1).join(' ');
+        PC++;
+    }
 
-        if(executionSpeed > 0){
-            reading_by_line = false;
-            asyncCall();
-        }else{
-            reading_by_line = true;
-        }
-    };
-    reader.readAsText(file);  
+    updateStateTables();
+    highlightCurrentLine(PC); // Переход подсветки
 }
 
-// main();
 
+/**
+ * Выполнение программы - автоматическое
+ */
+async function executeAutomatically() {
+    if (!isRunning || PC >= ass_code.length) {
+        if (isRunning) {
+            document.getElementById('output').textContent = "The program has been completed!";
+        }
+        setButtonsDisabled(false);
+        processExecSpeed();
+        isRunning = false;
+        document.getElementById('codeInput').readOnly = false;
+        highlightCurrentLine(-1);
+        return;
+    }
+    const delay = 1000 / getExecSpeed();
+
+    timeoutId = setTimeout(() => {
+        executeStep();
+        executeAutomatically();
+    }, delay);
+}
+
+
+/**
+ * Обработка скорости выполнения
+ */
+function getExecSpeed() {
+    let speed = parseFloat(document.getElementById("speedInput").value);
+    return isNaN(speed) || speed < 0 ? 0 : speed;
+}
+
+function processExecSpeed() {
+    // Скорость 0 -> пошаговый режим
+    // TODO: возможно поменять на что-то иное
+    document.getElementById('stepBtn').disabled =  getExecSpeed() > 0;
+}
+
+
+/**
+ * Блокировка/разблокировка кнопок управления
+ */
+function setButtonsDisabled(disabled) {
+    document.getElementById('runBtn').disabled  = disabled;
+    document.getElementById('stepBtn').disabled = disabled;
+}
+
+
+// ====================================================
+//              ЛОГИКА КОМАНД ПРОЦЕССОРА
+// ====================================================
+
+
+/**
+ * Маршрутизатор команд
+ */
+function call_command(command, res_op1, op2, op3) {
+    const old_PC = PC;
+    switch (command) {
+        case command_registry["MOV"]: MOV(res_op1, op2); break;
+        case command_registry["MOV_OFFSET"]: MOV_OFFSET(res_op1, op2, op3); break;
+        case command_registry["ADD"]: ADD(res_op1, op2, op3); break;
+        case command_registry["CMP"]: CMP(op2, op3); break;
+        case command_registry["JMP"]: JMP(res_op1); break;
+        case command_registry["JZ"]:  JZ(res_op1); break;
+        case command_registry["JNZ"]: JNZ(res_op1); break;
+        default:
+            console.error("Unknown command:", command);
+    }
+    if (PC === old_PC) PC++;
+}
+
+/**
+ * Получить значение из регистра/число...
+ */
+// function getValue(operand) {
+//     if (operand in registry) {
+//         return registry[operand];
+//     }
+//     if (operand in memory) {
+//         return memory[operand];
+//     }
+//     const num = +operand;
+//     return isNaN(num) ? 0 : num;
+// }
+function getValue(operand) {
+    if (operand in registry) return registry[operand];
+    const num = parseInt(operand, 10);
+    // если не чисто - вернем 0
+    return isNaN(num) ? 0 : num;
+}
+
+// Реализация команд
+
+function MOV(res_op1, op2) {
+    registry[res_op1] = getValue(op2);
+}
+
+function ADD(res_op1, op2, op3) {
+    let result = getValue(op2) + getValue(op3);
+    registry[res_op1] = result;
+    ZF = (result === 0) ? 1 : 0;
+}
+
+function CMP(op2, op3) {
+    let result = getValue(op2) - getValue(op3);
+    ZF = (result === 0) ? 1 : 0;
+}
+
+function JMP(where_to_jump) {
+    PC = parseInt(where_to_jump, 10) - 1;
+}
+
+function JZ(where_to_jump) {
+    if (ZF === 1) {
+        PC = parseInt(where_to_jump, 10);
+    } else {
+        PC++;
+    }
+}
+
+function JNZ(where_to_jump) {
+    if (ZF === 0) {
+        PC = parseInt(where_to_jump, 10);
+    } else {
+        PC++;
+    }
+}
