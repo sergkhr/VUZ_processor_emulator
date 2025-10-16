@@ -1,3 +1,19 @@
+/**
+ * TODO: TASKS
+ * -- вывод PC на UI;
+ * -- прослойка биты-байты:
+ *          асс-код
+ *              |
+ *          перевод в биты-байты (0 и 1) из асс-кода
+ *              |
+ *          обработка 0 и 1;
+ * ?? нужен стек;
+ * -- починить хранение данных, проблема все в строках (мб решиться с 0 и 1);
+ */
+
+
+
+
 // Дальше бога нет (эмулятор)
 // или иначе
 // ====================================================
@@ -91,10 +107,10 @@ function resetRegMemFlagPC() {
  * Полный сброс состояний эмулятора и интерфейса
  */
 function reset() {
-    if (timeoutId) {
-        clearTimeout(timeoutId);
-        // timeoutId = null;
-    }
+    // if (timeoutId) {
+    //     clearTimeout(timeoutId);
+    //     // timeoutId = null;
+    // }
     isRunning = false;
 
     // Сброс состояний "процессора"
@@ -234,7 +250,7 @@ function executeStep() {
         document.getElementById('runBtn').disabled = false;
         document.getElementById('codeInput').readOnly = false;
         highlightCurrentLine(-1);
-        // isRunning = false;
+        isRunning = false;
         return;
     }
 
@@ -261,23 +277,40 @@ function executeStep() {
  * Выполнение программы - автоматическое
  */
 async function executeAutomatically() {
-    if (!isRunning || PC >= ass_code.length) {
-        if (isRunning) {
-            document.getElementById('output').textContent = "The program has been completed!";
-        }
-        setButtonsDisabled(false);
-        processExecSpeed();
-        isRunning = false;
-        document.getElementById('codeInput').readOnly = false;
-        highlightCurrentLine(-1);
-        return;
-    }
-    const delay = 1000 / getExecSpeed();
+    // if (!isRunning || PC >= ass_code.length) {
+    //     if (isRunning) {
+    //         document.getElementById('output').textContent = "The program has been completed!";
+    //     }
+    //     setButtonsDisabled(false);
+    //     processExecSpeed();
+    //     isRunning = false;
+    //     document.getElementById('codeInput').readOnly = false;
+    //     highlightCurrentLine(-1);
+    //     return;
+    // }
+    // const delay = 1000 / getExecSpeed();
 
-    timeoutId = setTimeout(() => {
+    // timeoutId = setTimeout(() => {
+    //     executeStep();
+    //     executeAutomatically();
+    // }, delay);
+    while (isRunning && PC < ass_code.length) {
+        document.getElementById('output').textContent = "The program is running...";
+        
+        // Сначала задержка, потом шаг программы
+        const delay = 1000 / getExecSpeed();
+        await new Promise(resolve => setTimeout(resolve, delay));
         executeStep();
-        executeAutomatically();
-    }, delay);
+    }
+
+    if (isRunning) {
+        document.getElementById('output').textContent = "The program has been completed!";
+    }
+    setButtonsDisabled(false);
+    processExecSpeed();
+    isRunning = false;
+    document.getElementById('codeInput').readOnly = false;
+    highlightCurrentLine(-1);
 }
 
 
@@ -332,27 +365,39 @@ function call_command(command, res_op1, op2, op3) {
 /**
  * Получить значение из регистра/число...
  */
-// function getValue(operand) {
-//     if (operand in registry) {
-//         return registry[operand];
-//     }
-//     if (operand in memory) {
-//         return memory[operand];
-//     }
-//     const num = +operand;
-//     return isNaN(num) ? 0 : num;
-// }
 function getValue(operand) {
-    if (operand in registry) return registry[operand];
+    if (operand in registry) {
+        return registry[operand];
+    }
+    if (operand in memory) {
+        return memory[operand];
+    }
     const num = parseInt(operand, 10);
-    // если не чисто - вернем 0
     return isNaN(num) ? 0 : num;
 }
+// function getValue(operand) {
+//     if (operand in registry) return registry[operand];
+//     const num = parseInt(operand, 10);
+//     // если не чисто - вернем 0
+//     return isNaN(num) ? 0 : num;
+// }
 
 // Реализация команд
 
 function MOV(res_op1, op2) {
     registry[res_op1] = getValue(op2);
+}
+
+function MOV_OFFSET(res_op1, op2, op3) {
+    /*  TODO: не работает со взятием элемента массива по индексу
+        потому что массив хранится как строка напр.: '9 8 7 6 5'
+        надо чето с этим сделать...
+    */
+    registry[res_op1] = getValue(op2)[getValue(op3)]; // возможен конфликт, если operand — строка
+    // console.warn(res_op1, registry[res_op1]);
+    // console.warn(op2, [getValue(op2)]);
+    // console.warn(op3, getValue(op3));
+    // console.warn(memory);
 }
 
 function ADD(res_op1, op2, op3) {

@@ -45,7 +45,7 @@ input[type="number"] {
     position: relative; /* Чтобы быть над абсолютным элементом */
     z-index: 1;         /* Размещаем над подсветкой */
     width: 100%;
-    min-height: 250px;
+    min-height: 300px;
     color: #f1f1f1;
     border: 1px solid #ccc;
     background-color: #2d2d2d;
