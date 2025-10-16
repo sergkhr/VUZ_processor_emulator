@@ -5,10 +5,13 @@ MOV reg1 0 0
 
 MOV reg2 0 0
 
-MOV_OFFSET reg3 array reg2
+MOV_MEM_OFFSET reg4 n 0
+
+MARK M0 0 0
+MOV_MEM_OFFSET reg3 array reg2
 ADD reg1 reg1 reg3
 ADD reg2 reg2 1
-CMP 0 reg2 n
-JNZ 8 0 0
+CMP 0 reg2 reg4
+JNZ M0 0 0
 
 MOV reg16 reg1 0

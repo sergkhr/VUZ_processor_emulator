@@ -1,9 +1,19 @@
 MOV (where to) (address) (placeholder)
-MOV_OFFSET (where to) (address) (offset)
+
+MOV_MEM_OFFSET (where to) (from what memory to get) (offset)
 
 CMP (placeholder) (first) (second)
+
+MARK (mark name) (placeholder) (placeholder)
+JMP/JZ/JNZ (mark name) (placeholder) (placeholder)
+
 
 reg1 - is for sum
 reg2 - is for iterator
 
 reg16 - is the answer registry
+
+
+Пожалуйста делайте нормальный нейминг в функциях, особенно для принимаемых переменных
+
+MOV_OFFSET не нужен
