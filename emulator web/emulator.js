@@ -1,6 +1,6 @@
 /**
  * TODO: TASKS
- * -- вывод PC на UI;
+ * ++ вывод PC на UI;
  * -- прослойка биты-байты:
  *          асс-код
  *              |
@@ -8,7 +8,6 @@
  *              |
  *          обработка 0 и 1;
  * ?? нужен стек;
- * -- починить хранение данных, проблема все в строках (мб решиться с 0 и 1);
  */
 
 
@@ -140,6 +139,14 @@ function reset() {
     processExecSpeed();
 }
 
+
+/**
+ * 
+ */
+function incrementPC() {
+    PC++;
+    document.getElementById("pc").textContent = PC;
+}
 
 // ====================================================
 //              ОБНОВЛЕНИЕ ИНТЕРФЕЙСА
@@ -276,13 +283,13 @@ function executeStep() {
     
     // Существует команда или данные?? Иначе данные
     if (operation === '') {
-        PC++;
+        incrementPC();
     } else if (operation in command_registry) {
         const command = command_registry[operation];
         call_command(command, line[1], line[2], line[3]);
     } else {
         memory[line[0]] = line.slice(1).join(' ');
-        PC++;
+        incrementPC();
     }
 
     updateStateTables();
@@ -378,7 +385,7 @@ function call_command(command, res_op1, op2, op3) {
         default:
             console.error("Unknown command:", command);
     }
-    if (PC === old_PC) PC++;
+    if (PC === old_PC) incrementPC();
 }
 
 /**
@@ -433,7 +440,7 @@ function JMP(where_to_jump) {
         let jump_pos = mark_registry[where_to_jump];
         PC = parseInt(jump_pos, 10);
     } 
-    PC++;
+    incrementPC();
 }
 
 function JZ(where_to_jump) {
@@ -442,9 +449,9 @@ function JZ(where_to_jump) {
             let jump_pos = mark_registry[where_to_jump];
             PC = parseInt(jump_pos, 10);
         } 
-        PC++;
+        incrementPC(); // TODO: why?..
     } else {
-        PC++;
+        incrementPC();
     }
 }
 
@@ -454,9 +461,9 @@ function JNZ(where_to_jump) {
             let jump_pos = mark_registry[where_to_jump];
             PC = parseInt(jump_pos, 10);
         } 
-        PC++;
+        incrementPC(); // TODO: why?..
     } else {
-        PC++;
+        incrementPC();
     }
 }
 
