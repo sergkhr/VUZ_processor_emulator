@@ -1,16 +1,3 @@
-/**
- * TODO: TASKS
- * ++ вывод PC на UI;
- * -- прослойка биты-байты:
- *          асс-код
- *              |
- *          перевод в биты-байты (0 и 1) из асс-кода
- *              |
- *          обработка 0 и 1;
- * ?? нужен стек;
- */
-
-
 
 
 // Дальше бога нет (эмулятор)
@@ -23,7 +10,9 @@
 let registry = {};      // Регистры "процессора"
 let memory = {};        // Память для данных
 let mark_registry = {}; // Регистр меток для переходов
+
 let PC = 0;             // 0
+const PC_ui = document.getElementById("pc")
 
 // Флаги
 let flag_registry = {
@@ -105,7 +94,8 @@ function resetRegMemFlagPC() {
     flag_registry = {
         "ZF": 0,
     };
-    PC = 0;
+    PC = -1;
+    incrementPC();
 }
 
 
@@ -135,18 +125,19 @@ function reset() {
     updateStateTables();
     setButtonsDisabled(false);
 
-    // TODO: устанавливаем правильное состояние кнопки "Шаг"
+    // устанавливаем правильное состояние кнопки "Шаг"
     processExecSpeed();
 }
 
 
 /**
- * 
+ * Увеличение счетчика команд и обновление отображения на форме 
  */
 function incrementPC() {
     PC++;
-    document.getElementById("pc").textContent = PC;
+    PC_ui.textContent = PC;
 }
+
 
 // ====================================================
 //              ОБНОВЛЕНИЕ ИНТЕРФЕЙСА
@@ -194,7 +185,7 @@ function highlightCurrentLine(lineNumber) {
     }
 
     const lineHeight = parseFloat(getComputedStyle(codeInput).lineHeight);
-    const newTop = lineNumber * lineHeight + 17; // padding-top=15 + для-красоты=2
+    const newTop = lineNumber * lineHeight + 15; // padding-top=15
 
     highlighter.style.top = `${newTop}px`;
     highlighter.style.display = 'block';
@@ -300,23 +291,6 @@ function executeStep() {
  * Выполнение программы - автоматическое
  */
 async function executeAutomatically() {
-    // if (!isRunning || PC >= ass_code.length) {
-    //     if (isRunning) {
-    //         document.getElementById('output').textContent = "The program has been completed!";
-    //     }
-    //     setButtonsDisabled(false);
-    //     processExecSpeed();
-    //     isRunning = false;
-    //     document.getElementById('codeInput').readOnly = false;
-    //     highlightCurrentLine(-1);
-    //     return;
-    // }
-    // const delay = 1000 / getExecSpeed();
-
-    // timeoutId = setTimeout(() => {
-    //     executeStep();
-    //     executeAutomatically();
-    // }, delay);
     while (isRunning && PC < ass_code.length) {
         document.getElementById('output').textContent = "The program is running...";
         

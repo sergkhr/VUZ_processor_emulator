@@ -30,6 +30,7 @@ input[type="number"] {
 
 .editor-wrapper {
     position: relative;
+    overflow: hidden;
 }
 
 #codeInput, #highlighter {
@@ -47,7 +48,7 @@ input[type="number"] {
     width: 100%;
     min-height: 550px;
     color: #f1f1f1;
-    border: 1px solid #ccc;
+    border: 0px;
     background-color: #2d2d2d;
     white-space: pre;
     overflow: auto;
