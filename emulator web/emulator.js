@@ -1,41 +1,11 @@
 
 
 // Дальше бога нет (эмулятор)
-// или иначе
-// ====================================================
-//              ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
-// ====================================================
-
-
-let registry = {};      // Регистры "процессора"
-let memory = {};        // Память для данных
-let mark_registry = {}; // Регистр меток для переходов
-
-let PC = 0;             // 0
-const PC_ui = document.getElementById("pc")
-
-// Флаги
-let flag_registry = {
-    "ZF": 0,            // Флаг нуля (Zero Flag)
-}            
-
-let ass_code = [];      // Массив с кодом ассемблера по строкам
-let speed = 0;          // Шагов (строк) программы в секунду
-let isRunning = false;  // Флаг режима выполнения кода по шагам
-let timeoutId = null;   // id таймера
-
-// Регистры команд
-let command_registry = {
-    "MOV": 0,
-    "MOV_MEM_OFFSET": 1,
-    "ADD": 2,
-    "CMP": 3,
-    "JMP": 4,
-    "JZ": 5,
-    "JNZ": 6,
-    "MARK": 7,
-};
-
+registry
+memory
+mark_registry
+flag_registry
+command_registry
 
 // ====================================================
 //              ИНИЦИАЛИЗАЦИЯ
@@ -62,41 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
     reset();
 })
 
-
-/**
- * Сброс:
- * - регистров,
- * - памяти,
- * - флагов,
- * - счетчика команд.
- */
-function resetRegMemFlagPC() {
-    registry = {
-        "reg1": 0,
-        "reg2": 0,
-        "reg3": 0,
-        "reg4": 0,
-        "reg5": 0,
-        "reg6": 0,
-        "reg7": 0,
-        "reg8": 0,
-        "reg9": 0,
-        "reg10": 0,
-        "reg11": 0,
-        "reg12": 0,
-        "reg13": 0,
-        "reg14": 0,
-        "reg15": 0,
-        "reg16": 0
-    };
-    memory = {};
-    mark_registry = {};
-    flag_registry = {
-        "ZF": 0,
-    };
-    PC = -1;
-    incrementPC();
-}
 
 
 /**
@@ -140,70 +75,6 @@ function incrementPC() {
 
 
 // ====================================================
-//              ОБНОВЛЕНИЕ ИНТЕРФЕЙСА
-// ====================================================
-
-
-/**
- * Создание/обновление таблиц регистров и памяти
- */
-function updateStateTables() {
-    const regTable = document.getElementById('registry-table');
-    const memTable = document.getElementById('memory-table');
-    const flagTable = document.getElementById('flags-table');
-    const markTable = document.getElementById('marks-table');
-    regTable.innerHTML = '';
-    memTable.innerHTML = '';
-    flagTable.innerHTML = '';
-    markTable.innerHTML = '';
-
-    for (const [name, value] of Object.entries(registry)) {
-        regTable.innerHTML += `<span class="state-name">${name}:</span><span class="state-data">${value}</span>`;
-    }
-    for (const [name, value] of Object.entries(memory)) {
-        memTable.innerHTML += `<span class="state-name">${name}:</span><span class="state-data">${value}</span>`;
-    }
-    for (const [name, value] of Object.entries(flag_registry)) {
-        flagTable.innerHTML += `<span class="state-name">${name}:</span><span class="state-data">${value}</span>`;
-    }
-    for (const [name, value] of Object.entries(mark_registry)) {
-        markTable.innerHTML += `<span class="state-name">${name}:</span><span class="state-data">${value}</span>`;
-    }
-}
-
-
-/**
- * Подсветка выполнЯЕМОЙ строки кода (== PC)
- */
-function highlightCurrentLine(lineNumber) {
-    const codeInput = document.getElementById('codeInput');
-    const highlighter = document.getElementById('highlighter');
-    
-    if (lineNumber < 0) {
-        highlighter.style.display = 'none';
-        return
-    }
-
-    const lineHeight = parseFloat(getComputedStyle(codeInput).lineHeight);
-    const newTop = lineNumber * lineHeight + 15; // padding-top=15
-
-    highlighter.style.top = `${newTop}px`;
-    highlighter.style.display = 'block';
-    //TODO: добавить после подсветки строки асс-кода подсветку измененного регистра или памяти
-}
-
-/**
- * Синхронизация позиции подсветки при скорлле
- */
-function syncScroll() {
-    // TODO: есть баги, подсветка отображается у невидимых строк
-    const codeInput = document.getElementById('codeInput');
-    const highlighter = document.getElementById('highlighter');
-
-    highlighter.style.transform = `translateY(-${codeInput.scrollTop}px)`;
-}
-
-// ====================================================
 //              ЛОГИКА УПРАВЛЕНИЯ ВЫПОЛНЕНИЕМ
 // ====================================================
 
@@ -213,20 +84,9 @@ function syncScroll() {
  */
 function runCode() {
     // 1. Парсим код из textarea
-    const rawCode = document.getElementById('codeInput').value;
-    if (!rawCode) {
-        document.getElementById('output').textContent = "ERROR: The code field is empty!";
-        return false;
-    }
-    ass_code = rawCode.split('\n')
-        // .map(line => line.split(';')[0].trim()) // убираем комментарии и пробелы
-        // .filter(line => line)                   // убираем пустые строки
-        .map(line => line.split(/\s+/));        // разделяем по пробелам
-    
-    if (ass_code.length === 0) {
-        document.getElementById('output').textContent = "ERROR: No instruction was found!";
-        return false;
-    }
+    let compilerResult = compileCodeInput();
+    if(!compilerResult.done) return false;
+    ass_code = compilerResult.code;
 
     // 2. Сбрасываем состояния эмулятора, но не код, подсвечиваем, блочим на редактирование
     resetRegMemFlagPC();
@@ -325,14 +185,6 @@ function processExecSpeed() {
     document.getElementById('stepBtn').disabled =  getExecSpeed() > 0;
 }
 
-
-/**
- * Блокировка/разблокировка кнопок управления
- */
-function setButtonsDisabled(disabled) {
-    document.getElementById('runBtn').disabled  = disabled;
-    document.getElementById('stepBtn').disabled = disabled;
-}
 
 
 // ====================================================
