@@ -1,5 +1,18 @@
 // ====================================================
-//              СЛОВАРИ ДЛЯ БИНАРНЫХ ПЕРЕХОДОВ
+//              ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
+// ====================================================
+let PC = 0;             // 0
+const PC_ui = document.getElementById("pc")          
+
+let ass_code = [];      // Массив с кодом ассемблера по строкам
+let speed = 0;          // Шагов (строк) программы в секунду
+let isRunning = false;  // Флаг режима выполнения кода по шагам
+let timeoutId = null;   // id таймера
+
+
+
+// ====================================================
+//                   ДЛЯ КОМПИЛЯТОРА
 // ====================================================
 
 
@@ -17,22 +30,22 @@ const COMMAND_TO_BINARY = {
 };
 
 const REGISTER_TO_BINARY = {
-    "reg1":  "0000",
-    "reg2":  "0001",
-    "reg3":  "0010",
-    "reg4":  "0011",
-    "reg5":  "0100",
-    "reg6":  "0101",
-    "reg7":  "0110",
-    "reg8":  "0111",
-    "reg9":  "1000",
-    "reg10": "1001",
-    "reg11": "1010",
-    "reg12": "1011",
-    "reg13": "1100",
-    "reg14": "1101",
-    "reg15": "1110",
-    "reg16": "1111"
+    "reg1":  "00000000",
+    "reg2":  "00000001",
+    "reg3":  "00000010",
+    "reg4":  "00000011",
+    "reg5":  "00000100",
+    "reg6":  "00000101",
+    "reg7":  "00000110",
+    "reg8":  "00000111",
+    "reg9":  "00001000",
+    "reg10": "00001001",
+    "reg11": "00001010",
+    "reg12": "00001011",
+    "reg13": "00001100",
+    "reg14": "00001101",
+    "reg15": "00001110",
+    "reg16": "00001111"
 };
 
 const FLAG_TO_BINARY = {
@@ -44,38 +57,45 @@ let MARK_TO_BINARY = {};
 
 let MEMORY_TO_BINARY = {};
 
+
+// ====================================================
+//                      ПАМЯТЬ
+// ====================================================
+
+
 // "бинарный код" -> "значение"
 
 let REGISTER_BINARY_TO_STATE = {
-    "0000": 0, // reg1
-    "0001": 0, // reg2
-    "0010": 0, // reg3
-    "0011": 0, // reg4
-    "0100": 0, // reg5
-    "0101": 0, // reg6
-    "0110": 0, // reg7
-    "0111": 0, // reg8
-    "1000": 0, // reg9
-    "1001": 0, // reg10
-    "1010": 0, // reg11
-    "1011": 0, // reg12
-    "1100": 0, // reg13
-    "1101": 0, // reg14
-    "1110": 0, // reg15
-    "1111": 0  // reg16
+    "00000000": 0, // reg1
+    "00000001": 0, // reg2
+    "00000010": 0, // reg3
+    "00000011": 0, // reg4
+    "00000100": 0, // reg5
+    "00000101": 0, // reg6
+    "00000110": 0, // reg7
+    "00000111": 0, // reg8
+    "00001000": 0, // reg9
+    "00001001": 0, // reg10
+    "00001010": 0, // reg11
+    "00001011": 0, // reg12
+    "00001100": 0, // reg13
+    "00001101": 0, // reg14
+    "00001110": 0, // reg15
+    "00001111": 0  // reg16
 };
 
 // в значении: 0 или 1
 // TODO: либо сделать boolean true/false
 let FLAG_BINARY_TO_STATE = {
-    "0000": 0 // ZF
+    "0000": 0, // ZF
+    "0001": 0 // CF
 };
 
 let MARK_BINARY_TO_STATE = {};
 
 let MEMORY_BINARY_TO_STATE = {};
 
-_dict_name_to_binary = {
+let _dict_name_to_binary = {
     "command": COMMAND_TO_BINARY,
     "register": REGISTER_TO_BINARY,
     "flag": FLAG_TO_BINARY,
@@ -83,7 +103,7 @@ _dict_name_to_binary = {
     "memory": MEMORY_TO_BINARY
 }
 
-_dict_name_binary_to_state = {
+let _dict_name_binary_to_state = {
     "register": REGISTER_BINARY_TO_STATE,
     "flag": FLAG_BINARY_TO_STATE,
     "mark": MARK_BINARY_TO_STATE,
@@ -109,5 +129,46 @@ function findFromNameToBinary(dict_name, op) {
  * @returns {string} - значение ячейки из нужного словаря
  */
 function findFromBinaryToState(dict_name, op) {
-    return _dict_name_binary_to_state[dict_name][op];
+    if (op in _dict_name_binary_to_state[dict_name]){
+        return _dict_name_binary_to_state[dict_name][op];
+    }
+    return undefined;
+}
+
+
+/**
+ * Установка значения по бинарному
+ * @param {string} dict_name - название чему принадлежит "command"/"register"/"flag"/"mark"/"memory"
+ * @param {string} op - бинарное значение
+ * @param {BigInteger} value - значение, которое кладем 
+ * @returns {boolean} - успешность операции 
+ */
+function setMemoryState(dict_name, op, value) {
+    _dict_name_binary_to_state[dict_name][op] = value;
+    return true; //если кто-то хочет может сделать нормальную проверку успешности
+}
+
+
+/**
+ * Сброс:
+ * - регистров,
+ * - памяти,
+ * - флагов,
+ * - счетчика команд.
+ */
+function resetRegMemFlagPC() {
+    //регистры в ноль
+    Object.keys(REGISTER_BINARY_TO_STATE).forEach(key => {
+        REGISTER_BINARY_TO_STATE[key] = 0;
+    });
+    //флаги в ноль
+    Object.keys(FLAG_BINARY_TO_STATE).forEach(key => {
+        FLAG_BINARY_TO_STATE[key] = 0;
+    });
+
+    MARK_BINARY_TO_STATE = {};
+    MEMORY_BINARY_TO_STATE = {};
+    
+    PC = -1;
+    incrementPC();
 }
