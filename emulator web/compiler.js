@@ -65,8 +65,6 @@ function compile_CMP(placeholder, op2, op3) {
     
 }
 
-
-// PC++ after successfull jump i needed to not execute the MARK command again
 function compile_JMP(where_to_jump, placeholder1, placeholder2) {
     
 }
