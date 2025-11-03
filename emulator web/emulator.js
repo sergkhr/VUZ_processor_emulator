@@ -1,9 +1,6 @@
 
 
 // Дальше бога нет (эмулятор)
-registry
-memory
-mark_registry
 
 // ====================================================
 //              ИНИЦИАЛИЗАЦИЯ
@@ -62,14 +59,6 @@ function reset() {
     processExecSpeed();
 }
 
-
-/**
- * Увеличение счетчика команд и обновление отображения на форме 
- */
-function incrementPC() {
-    PC++;
-    PC_ui.textContent = PC;
-}
 
 
 // ====================================================
@@ -131,13 +120,13 @@ function executeStep() {
     
     // ПЕРЕДЕЛАТЬ
     if (operation === '') {
-        incrementPC();
+        incrementPC(); // оптимизация да, но лишнее
     } else if (operation in COMMAND_TO_BINARY) {
         const command = COMMAND_TO_BINARY[operation];
         call_command(command, line[1], line[2], line[3]);
     } else {
         memory[line[0]] = line.slice(1).join(' ');
-        incrementPC();
+        incrementPC(); //теперь не будет нужен, так как каждый шаг должен вызывать call_command
     }
 
     updateStateTables();
@@ -189,6 +178,13 @@ function processExecSpeed() {
 //              ЛОГИКА КОМАНД ПРОЦЕССОРА
 // ====================================================
 
+/**
+ * Увеличение счетчика команд и обновление отображения на форме 
+ */
+function incrementPC() {
+    PC++;
+    PC_ui.textContent = PC;
+}
 
 /**
  * Маршрутизатор команд
@@ -217,7 +213,7 @@ function call_command(command, res_op1, op2, op3) {
     if(command_name in command_dict) command_dict[command_name];
     else console.error("Unknown command: ", command, " named: ", command_name);
 
-    if (PC === old_PC) incrementPC();
+    if (PC === old_PC) incrementPC(); //этого достаточно, это основное перемещение программы
 }
 
 /**
@@ -276,8 +272,6 @@ function JZ(where_to_jump) {
             let jump_pos = mark_registry[where_to_jump];
             PC = parseInt(jump_pos, 10);
         } 
-        incrementPC(); // TODO: why?..
-    } else {
         incrementPC();
     }
 }
@@ -288,8 +282,6 @@ function JNZ(where_to_jump) {
             let jump_pos = mark_registry[where_to_jump];
             PC = parseInt(jump_pos, 10);
         } 
-        incrementPC(); // TODO: why?..
-    } else {
         incrementPC();
     }
 }
