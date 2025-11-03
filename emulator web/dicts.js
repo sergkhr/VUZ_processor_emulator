@@ -20,13 +20,17 @@ let timeoutId = null;   // id таймера
 
 const COMMAND_TO_BINARY = {
     "MOV":            "0000",
-    "MOV_MEM_OFFSET": "0001",
+    "MOV_LIT":        "0001",
     "ADD":            "0010",
     "CMP":            "0011",
     "JMP":            "0100",
     "JZ":             "0101",
     "JNZ":            "0110",
-    "MARK":           "0111"
+    "MARK":           "0111",
+    "VAR":            "1000",
+    "ARR_ALLOC":      "1001",
+    "SET_MEM_OFFSET": "1010",
+    "MOV_MEM_OFFSET": "1011"
 };
 
 const REGISTER_TO_BINARY = {
@@ -135,6 +139,45 @@ function findFromBinaryToState(dict_name, op) {
     return undefined;
 }
 
+// TODO: возможно претерпит изменения, но должен пригодиться...
+/**
+ * Значение из имени
+ * @param {string} dict_name - название чему принадлежит "command"/"register"/"flag"/"mark"/"memory"
+ * @param {string} op - название команды/регистра/флага/марки/переменной_в_памяти
+ * @returns {string} - значение ячейки из нужного словаря
+ */
+function getValueByName(dict_name, op) {
+    return findFromBinaryToState(dict_name, findFromNameToBinary(dict_name, op));
+}
+
+// TODO: возможно претерпит изменения, но должен пригодиться...
+/**
+ * Значение из имени
+ * @param {string} dict_name - название чему принадлежит "command"/"register"/"flag"/"mark"/"memory"
+ * @param {string} binary - бинарное значение
+ * @returns {string} - название команды/регистра/флага/марки/переменной_в_памяти
+ */
+function getNameByBinary(dict_name, binary) {
+    const object = _dict_name_to_binary[dict_name];
+    return Object.keys(object).find(key => object[key] === binary);
+}
+
+
+
+
+// TODO: возможно претерпит изменения, но должен пригодиться...
+/**
+ * Значение из имени
+ * @param {string} dict_name - название чему принадлежит "command"/"register"/"flag"/"mark"/"memory"
+ * @param {string} op - название команды/регистра/флага/марки/переменной_в_памяти
+ * @param {value} value - устанавливаемое значение
+ * @returns {string} - успешность операции
+ */
+function setValueByName(dict_name, op, value) {
+    _dict_name_binary_to_state[dict_name][findFromNameToBinary(dict_name, op)] = value;
+    return true; //если кто-то хочет может сделать нормальную проверку успешности
+}
+
 
 /**
  * Установка значения по бинарному
@@ -143,7 +186,7 @@ function findFromBinaryToState(dict_name, op) {
  * @param {BigInteger} value - значение, которое кладем 
  * @returns {boolean} - успешность операции 
  */
-function setMemoryState(dict_name, op, value) {
+function setValueByBinary(dict_name, op, value) {
     _dict_name_binary_to_state[dict_name][op] = value;
     return true; //если кто-то хочет может сделать нормальную проверку успешности
 }
