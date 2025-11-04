@@ -33,19 +33,13 @@ document.addEventListener('DOMContentLoaded', () => {
  * Полный сброс состояний эмулятора и интерфейса
  */
 function reset() {
-    // if (timeoutId) {
-    //     clearTimeout(timeoutId);
-    //     // timeoutId = null;
-    // }
     isRunning = false;
 
-    // Сброс состояний "процессора"
     resetRegMemFlagPC();
     ass_code = [];
 
-    // Сброс интерфейса
+
     const codeInput = document.getElementById('codeInput');
-    // codeInput.value = "MOV reg1 10\nMOV reg2 5 0\nADD reg3 reg1 reg2\nCMP 0 reg3 15\nJZ 5 0 0\nJMP 6 0 0\nMOV reg4 1 0";
     
     codeInput.readOnly = false; // можем редактировать асс-код
     highlightCurrentLine(-1);   // убираем подсветку
@@ -55,7 +49,6 @@ function reset() {
     updateStateTables();
     setButtonsDisabled(false);
 
-    // устанавливаем правильное состояние кнопки "Шаг"
     processExecSpeed();
 }
 
@@ -115,22 +108,13 @@ function executeStep() {
         return;
     }
 
-    const line = ass_code[PC];
-    const operation = line[0].toUpperCase();
-    
-    // ПЕРЕДЕЛАТЬ
-    if (operation === '') {
-        incrementPC(); // оптимизация да, но лишнее
-    } else if (operation in COMMAND_TO_BINARY) {
-        const command = COMMAND_TO_BINARY[operation];
-        call_command(command, line[1], line[2], line[3]);
-    } else {
-        memory[line[0]] = line.slice(1).join(' ');
-        incrementPC(); //теперь не будет нужен, так как каждый шаг должен вызывать call_command
-    }
+
+    const command_line = ass_code[PC];
+    call_command(command_line[0], command_line[1], command_line[2], command_line[3]);
+
 
     updateStateTables();
-    highlightCurrentLine(PC); // Переход подсветки
+    highlightCurrentLine(PC);
 }
 
 
@@ -174,6 +158,15 @@ function processExecSpeed() {
 
 
 
+
+
+
+
+
+
+
+
+
 // ====================================================
 //              ЛОГИКА КОМАНД ПРОЦЕССОРА
 // ====================================================
@@ -189,123 +182,95 @@ function incrementPC() {
 /**
  * Маршрутизатор команд
  */
-function call_command(command, res_op1, op2, op3) {
+function call_command(command_code, res_op1, op2, op3) {
+    if (command_code === "") incrementPC();
+
     const old_PC = PC;
-
-    const command_dict = { // я вообще не знаю насколько это лучше switch case, но так удобнее
-        "":               incrementPC(),
-        "MOV":            MOV(res_op1, op2),
-        "MOV_LIT":        MOV_LIT(res_op1, op2),
-        "ADD":            ADD(res_op1, op2, op3),
-        "CMP":            CMP(op2, op3),
-        "JMP":            JMP(res_op1),
-        "JZ":             JZ(res_op1),
-        "JNZ":            JNZ(res_op1),
-        "MARK":           MARK(res_op1),
-        "VAR":            VAR(res_op1, op2),
-        "ARR_ALLOC":      ARR_ALLOC(res_op1, op2),
-        "SET_MEM_OFFSET": SET_MEM_OFFSET(res_op1, op2, op3),
-        "MOV_MEM_OFFSET": MOV_MEM_OFFSET(res_op1, op2, op3)
-    }
-
-    const command_name = getNameByBinary("command", command);
+    const command = getCommandByCode(command_code);
     
-    if(command_name in command_dict) command_dict[command_name];
-    else console.error("Unknown command: ", command, " named: ", command_name);
+    if(command) command[DB.call](res_op1, op2, op3);
+    else console.error("Unknown command: ", command_code, " named: ", command[DB.name]);
 
     if (PC === old_PC) incrementPC(); //этого достаточно, это основное перемещение программы
 }
 
-/**
- * Получить значение из регистра/число...
- */
-function getValue(operand) {
-    if (operand in registry) {
-        return registry[operand];
-    }
-    if (operand in memory) {
-        return memory[operand];
-    }
-    const num = parseInt(operand, 10);
-    return isNaN(num) ? 0 : num;
-}
+
+
+
+
+
+
+
 
 function updateFlags(last_command_result){
-    setValueByName("flag", "ZF", (last_command_result === 0) ? 1 : 0);
+    getFlagByCode(getFlagCode("ZF"))[DB.value] = (last_command_result === 0) ? 1 : 0;
     //TODO CF
     return last_command_result;
 }
 
-// Реализация команд
 
-function MOV(res_reg, reg) {
-    registry[res_reg] = getValue(reg);
+
+function MOV(res_reg_code, reg_code) {
+    getRegisterByCode(res_reg_code)[DB.value] = getRegisterByCode(reg_code)[DB.value];
 }
 
-function MOV_LIT(res_op1, literal){
-    console.log("mov literal todo");
+function MOV_LIT(res_reg_code, literal){
+    literal = parseInt(literal, 2);
+    getRegisterByCode(res_reg_code)[DB.value] = literal;
 }
 
-function ADD(res_reg, reg1, reg2) {
-    let result = getValue(reg1) + getValue(reg2);
-    registry[res_reg] = updateFlags(result);
+function ADD(res_reg_code, reg1_code, reg2_code) {
+    let result = getRegisterByCode(reg1_code)[DB.value] + getRegisterByCode(reg2_code)[DB.value];
+    getRegisterByCode(res_reg_code)[DB.value] = updateFlags(result);
 }
 
-function CMP(op2, op3) {
-    let result = getValue(op2) - getValue(op3);
+function CMP(reg1_code, reg2_code) {
+    let result = getRegisterByCode(reg1_code)[DB.value] - getRegisterByCode(reg2_code)[DB.value];
     updateFlags(result);
 }
 
 
 // PC++ after successfull jump i needed to not execute the MARK command again
-function JMP(where_to_jump) {
-    if(where_to_jump in mark_registry){
-        let jump_pos = mark_registry[where_to_jump];
-        PC = parseInt(jump_pos, 10);
-    } 
+function JMP(mark_code) {
+    let jump_pos = getMarkByCode(mark_code)[DB.value];
+    PC = parseInt(jump_pos, 10);
     incrementPC();
 }
 
-function JZ(where_to_jump) {
-    if (getValueByName("flag", "ZF") === 1) {
-        if(where_to_jump in mark_registry){
-            let jump_pos = mark_registry[where_to_jump];
-            PC = parseInt(jump_pos, 10);
-        } 
+function JZ(mark_code) {
+    if (getFlagByCode(getFlagCode("ZF"))[DB.value] === 1) {
+        let jump_pos = getMarkByCode(mark_code)[DB.value];
+        PC = parseInt(jump_pos, 10);
         incrementPC();
     }
 }
 
-function JNZ(where_to_jump) {
-    if (getValueByName("flag", "ZF") === 0) {
-        if(where_to_jump in mark_registry){
-            let jump_pos = mark_registry[where_to_jump];
-            PC = parseInt(jump_pos, 10);
-        } 
+function JNZ(mark_code) {
+    if (getFlagByCode(getFlagCode("ZF"))[DB.value] === 0) {
+        let jump_pos = getMarkByCode(mark_code)[DB.value];
+        PC = parseInt(jump_pos, 10);
         incrementPC();
     }
 }
 
-function MARK(mark_name) {
-    mark_registry[mark_name] = PC;
+function MARK(mark_code) {
+    console.log("зачем MARK выполняется после компиляции?");
 }
 
-function VAR(memory_address, literal){
-    console.log("var todo");
+function VAR(memory_code, literal){
+    literal = parseInt(literal, 2);
+    getMemoryByCode(memory_code)[DB.value] = literal;
 }
 
-function ARR_ALLOC(memory_address, length){
-    console.log("array alloc todo");
+function ARR_ALLOC(memory_code, length){
+    console.log("зачем ARR_ALLOC выполняется, если аллокация на компиляции?");
+}
+function SET_MEM_OFFSET(memory_code, reg_code, offset){
+    let index = parseInt(memory_code, 2);
+    memory_db[index + offset][DB.value] = getRegisterByCode(reg_code)[DB.value];
 }
 
-function SET_MEM_OFFSET(memory_address, literal, offset){
-    console.log("set memory offset todo");
-}
-
-function MOV_MEM_OFFSET(res_op1, memory_op2, offset_op3) {
-    if (memory_op2 in memory){
-        let array = memory[memory_op2].trim().split(' ')
-        registry[res_op1] = getValue(array[getValue(offset_op3)]);
-    }
-    else registry[res_op1] = getValue(memory_op2);
+function MOV_MEM_OFFSET(res_reg_code, memory_code, offset) {
+    let index = parseInt(memory_code, 2);
+    getRegisterByCode(res_reg_code)[DB.value] = memory_db[index + offset][DB.value];
 }

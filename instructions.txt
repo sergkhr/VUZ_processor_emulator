@@ -9,16 +9,16 @@ JMP/JZ/JNZ (mark name) (placeholder) (placeholder)
 MARK (mark name) (placeholder) (placeholder)
 
 VAR (mem name) (literal) (placeholder)
-ARR_ALLOC (mem name) (length) (placeholder)
+ARR_ALLOC (mem name) (length literal) (placeholder)
 
-SET_MEM_OFFSET (mem name) (literal) (offset)
+SET_MEM_OFFSET (mem name) (register) (offset)
 MOV_MEM_OFFSET (where to) (mem name) (offset)
 
 
 
 
 
-
+literals are turned into bit-strings by compiler and are parsed
 
 
 
