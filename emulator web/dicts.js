@@ -51,8 +51,8 @@ const command_db = [
 //БАЗА ДАННЫХ РЕГИСТРОВ
 //название - значение
 let register_db = [
-    ["reg1",  0],
-    ["reg2",  0],
+    ["sum",  0],
+    ["iterator",  0],
     ["reg3",  0],
     ["reg4",  0],
     ["reg5",  0],
@@ -66,7 +66,7 @@ let register_db = [
     ["reg13", 0],
     ["reg14", 0],
     ["reg15", 0],
-    ["reg16", 0]
+    ["result", 0]
 ];
 
 
