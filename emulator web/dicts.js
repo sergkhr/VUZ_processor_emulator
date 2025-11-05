@@ -88,6 +88,15 @@ let flag_db = [
 ];
 
 
+let _dict_name_db = {
+    "command": command_db,
+    "register": register_db,
+    "flag": flag_db,
+    "mark": mark_db,
+    "memory": memory_db
+}
+
+
 
 // ====================================================
 //              ФУНКЦИИ ДЛЯ БАЗ ДАННЫХ
@@ -274,21 +283,6 @@ function getFlagByCode(code) {
 // ====================================================
 //                    ОБЩИЕ ФУНКЦИИ
 // ====================================================
-
-let _dict_name_to_binary = {
-    "command": COMMAND_TO_BINARY,
-    "register": REGISTER_TO_BINARY,
-    "flag": FLAG_TO_BINARY,
-    "mark": MARK_TO_BINARY,
-    "memory": MEMORY_TO_BINARY
-}
-
-let _dict_name_binary_to_state = {
-    "register": REGISTER_BINARY_TO_STATE,
-    "flag": FLAG_BINARY_TO_STATE,
-    "mark": MARK_BINARY_TO_STATE,
-    "memory": MEMORY_BINARY_TO_STATE
-}
 
 
 

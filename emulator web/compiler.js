@@ -29,7 +29,8 @@ function compileCodeInput(){
 
 function compileCode(ass_code){
     let compiled_code = [];
-    ass_code.forEach(code_line, index => {
+    console.warn(ass_code);
+    ass_code.forEach((code_line, index) => {
         const target_length = 4;
         for (let i = code_line.length; i < target_length; i++) code_line.push("");
 
