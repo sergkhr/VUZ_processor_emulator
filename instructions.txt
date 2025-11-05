@@ -26,10 +26,10 @@ literals are turned into bit-strings by compiler and are parsed
 
 
 
-reg1 - is for sum
-reg2 - is for iterator
-
-reg16 - is the answer registry
+we have special registers named
+sum,
+iterator,
+result
 
 
 Пожалуйста делайте нормальный нейминг в функциях, особенно для принимаемых переменных
