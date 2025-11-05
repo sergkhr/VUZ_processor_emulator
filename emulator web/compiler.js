@@ -36,7 +36,7 @@ function compileCode(ass_code){
 
         let command_line = compile_command(code_line[0], code_line[1], code_line[2], code_line[3], index);
         if(!command_line) {
-            alert("Error during compilation at line ", index+1); // не хорошо алертить тут, но пока так, а то поднимать индекс надо
+            alert("Error during compilation at line " + (index+1).toString()); // не хорошо алертить тут, но пока так, а то поднимать индекс надо
             return undefined;
         };
         compiled_code.push(command_line);
@@ -214,6 +214,7 @@ function compile_VAR(memory_name, literal, placeholder){
 
     let memory_code = getMemoryCode(memory_name);
     if(memory_code) return undefined; // аллокация уже существующей ячейки - error
+    console.log(memory_db);
     memory_db.push([memory_name, "?"]);
     command_tail.push(getMemoryCode(memory_name));
 
