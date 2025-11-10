@@ -1,11 +1,6 @@
 
 
 // Дальше бога нет (эмулятор)
-registry
-memory
-mark_registry
-flag_registry
-command_registry
 
 // ====================================================
 //              ИНИЦИАЛИЗАЦИЯ
@@ -38,19 +33,13 @@ document.addEventListener('DOMContentLoaded', () => {
  * Полный сброс состояний эмулятора и интерфейса
  */
 function reset() {
-    // if (timeoutId) {
-    //     clearTimeout(timeoutId);
-    //     // timeoutId = null;
-    // }
     isRunning = false;
 
-    // Сброс состояний "процессора"
     resetRegMemFlagPC();
     ass_code = [];
 
-    // Сброс интерфейса
+
     const codeInput = document.getElementById('codeInput');
-    // codeInput.value = "MOV reg1 10\nMOV reg2 5 0\nADD reg3 reg1 reg2\nCMP 0 reg3 15\nJZ 5 0 0\nJMP 6 0 0\nMOV reg4 1 0";
     
     codeInput.readOnly = false; // можем редактировать асс-код
     highlightCurrentLine(-1);   // убираем подсветку
@@ -60,18 +49,9 @@ function reset() {
     updateStateTables();
     setButtonsDisabled(false);
 
-    // устанавливаем правильное состояние кнопки "Шаг"
     processExecSpeed();
 }
 
-
-/**
- * Увеличение счетчика команд и обновление отображения на форме 
- */
-function incrementPC() {
-    PC++;
-    PC_ui.textContent = PC;
-}
 
 
 // ====================================================
@@ -83,18 +63,21 @@ function incrementPC() {
  * Главная функция выполнения программы
  */
 function runCode() {
-    // 1. Парсим код из textarea
+    resetRegMemFlagPC();
+    
+    // Парсим код из textarea
     let compilerResult = compileCodeInput();
+    console.log(compilerResult);
+    console.log(memory_db);
+    console.log(mark_db);
     if(!compilerResult.done) return false;
     ass_code = compilerResult.code;
 
-    // 2. Сбрасываем состояния эмулятора, но не код, подсвечиваем, блочим на редактирование
-    resetRegMemFlagPC();
     updateStateTables();
     highlightCurrentLine(0); // начало подсветки
     document.getElementById('codeInput').readOnly = true;
 
-    // 3. Выполняеммммм
+    // Выполняеммммм
     if (getExecSpeed() > 0) {
         isRunning = true;
         // Блочим кнопки, пока прога выполняется
@@ -128,22 +111,13 @@ function executeStep() {
         return;
     }
 
-    const line = ass_code[PC];
-    const operation = line[0].toUpperCase();
-    
-    // Существует команда или данные?? Иначе данные
-    if (operation === '') {
-        incrementPC();
-    } else if (operation in command_registry) {
-        const command = command_registry[operation];
-        call_command(command, line[1], line[2], line[3]);
-    } else {
-        memory[line[0]] = line.slice(1).join(' ');
-        incrementPC();
-    }
+
+    const command_line = ass_code[PC];
+    call_command(command_line[0], command_line[1], command_line[2], command_line[3]);
+
 
     updateStateTables();
-    highlightCurrentLine(PC); // Переход подсветки
+    highlightCurrentLine(PC);
 }
 
 
@@ -187,111 +161,132 @@ function processExecSpeed() {
 
 
 
+
+
+
+
+
+
+
+
+
 // ====================================================
 //              ЛОГИКА КОМАНД ПРОЦЕССОРА
 // ====================================================
 
+/**
+ * Увеличение счетчика команд и обновление отображения на форме 
+ */
+function incrementPC() {
+    PC++;
+    PC_ui.textContent = PC;
+}
 
 /**
  * Маршрутизатор команд
  */
-function call_command(command, res_op1, op2, op3) {
+function call_command(command_code, res_op1, op2, op3) {
+    if (command_code === ""){
+        incrementPC();
+        return;
+    } 
+
     const old_PC = PC;
-    switch (command) {
-        case command_registry["MOV"]: MOV(res_op1, op2); break;
-        // case command_registry["MOV_OFFSET"]: MOV_OFFSET(res_op1, op2, op3); break;
-        case command_registry["ADD"]: ADD(res_op1, op2, op3); break;
-        case command_registry["CMP"]: CMP(op2, op3); break;
-        case command_registry["JMP"]: JMP(res_op1); break;
-        case command_registry["JZ"]:  JZ(res_op1); break;
-        case command_registry["JNZ"]: JNZ(res_op1); break;
-        case command_registry["MOV_MEM_OFFSET"]: MOV_MEM_OFFSET(res_op1, op2, op3); break;
-        case command_registry["MARK"]: MARK(res_op1); break;
-        default:
-            console.error("Unknown command:", command);
-    }
-    if (PC === old_PC) incrementPC();
+    const command = getCommandByCode(command_code);
+    
+    if(command) command[DB.call](res_op1, op2, op3);
+    else console.error("Unknown command: ", command_code);
+
+    if (PC === old_PC) incrementPC(); //этого достаточно, это основное перемещение программы
 }
 
-/**
- * Получить значение из регистра/число...
- */
-function getValue(operand) {
-    if (operand in registry) {
-        return registry[operand];
-    }
-    if (operand in memory) {
-        return memory[operand];
-    }
-    const num = parseInt(operand, 10);
-    return isNaN(num) ? 0 : num;
-}
-// function getValue(operand) {
-//     if (operand in registry) return registry[operand];
-//     const num = parseInt(operand, 10);
-//     // если не чисто - вернем 0
-//     return isNaN(num) ? 0 : num;
-// }
 
-// Реализация команд
 
-function MOV(res_op1, op2) {
-    registry[res_op1] = getValue(op2);
+
+
+
+
+
+
+function updateFlags(last_command_result){
+    let parsed_res = parseInt(last_command_result, 10);
+    getFlagByCode(getFlagCode("ZF"))[DB.value] = ((parsed_res === 0) ? 1 : 0);
+    //TODO CF
+    return last_command_result;
 }
 
-function MOV_MEM_OFFSET(res_op1, memory_op2, offset_op3) {
-    if (memory_op2 in memory){
-        let array = memory[memory_op2].trim().split(' ')
-        registry[res_op1] = getValue(array[getValue(offset_op3)]);
-    }
-    else registry[res_op1] = getValue(memory_op2)
+
+
+function MOV(res_reg_code, reg_code, placeholder) {
+    getRegisterByCode(res_reg_code)[DB.value] = getRegisterByCode(reg_code)[DB.value];
 }
 
-function ADD(res_op1, op2, op3) {
-    let result = getValue(op2) + getValue(op3);
-    registry[res_op1] = result;
-    flag_registry["ZF"] = (result === 0) ? 1 : 0;
+function MOV_LIT(res_reg_code, literal, placeholder){
+    literal = parseInt(literal, 2);
+    getRegisterByCode(res_reg_code)[DB.value] = literal;
 }
 
-function CMP(op2, op3) {
-    let result = getValue(op2) - getValue(op3);
-    flag_registry["ZF"] = (result === 0) ? 1 : 0;
+function ADD(res_reg_code, reg1_code, reg2_code) {
+    let result = getRegisterByCode(reg1_code)[DB.value] + getRegisterByCode(reg2_code)[DB.value];
+    getRegisterByCode(res_reg_code)[DB.value] = updateFlags(result);
+}
+
+function CMP(placeholder, reg1_code, reg2_code) {
+    let result = getRegisterByCode(reg1_code)[DB.value] - getRegisterByCode(reg2_code)[DB.value];
+    updateFlags(result);
 }
 
 
 // PC++ after successfull jump i needed to not execute the MARK command again
-function JMP(where_to_jump) {
-    if(where_to_jump in mark_registry){
-        let jump_pos = mark_registry[where_to_jump];
-        PC = parseInt(jump_pos, 10);
-    } 
+function JMP(mark_code, placeholder, placeholder) {
+    let jump_pos = getMarkByCode(mark_code)[DB.value];
+    PC = parseInt(jump_pos, 10);
     incrementPC();
 }
 
-function JZ(where_to_jump) {
-    if (flag_registry["ZF"] === 1) {
-        if(where_to_jump in mark_registry){
-            let jump_pos = mark_registry[where_to_jump];
-            PC = parseInt(jump_pos, 10);
-        } 
-        incrementPC(); // TODO: why?..
-    } else {
+function JZ(mark_code, placeholder, placeholder) {
+    if (getFlagByCode(getFlagCode("ZF"))[DB.value] === 1) {
+        let jump_pos = getMarkByCode(mark_code)[DB.value];
+        PC = parseInt(jump_pos, 10);
         incrementPC();
     }
 }
 
-function JNZ(where_to_jump) {
-    if (flag_registry["ZF"] === 0) {
-        if(where_to_jump in mark_registry){
-            let jump_pos = mark_registry[where_to_jump];
-            PC = parseInt(jump_pos, 10);
-        } 
-        incrementPC(); // TODO: why?..
-    } else {
+function JNZ(mark_code, placeholder, placeholder) {
+    if (getFlagByCode(getFlagCode("ZF"))[DB.value] === 0) {
+        let jump_pos = getMarkByCode(mark_code)[DB.value];
+        PC = parseInt(jump_pos, 10);
         incrementPC();
     }
 }
 
-function MARK(mark_name) {
-    mark_registry[mark_name] = PC;
+function MARK(mark_code, placeholder, placeholder) {
+    console.log("зачем MARK выполняется после компиляции?");
+}
+
+function VAR(memory_code, literal, placeholder){
+    literal = parseInt(literal, 2);
+    getMemoryByCode(memory_code)[DB.value] = literal;
+}
+
+function ARR_ALLOC(memory_code, length, placeholder){
+    console.log("зачем ARR_ALLOC выполняется, если аллокация на компиляции?");
+}
+
+function SET_MEM_OFFSET(memory_code, reg_code, offset){
+    let index = parseInt(memory_code, 2);
+    offset = parseInt(offset, 2);
+    memory_db[index + offset][DB.value] = getRegisterByCode(reg_code)[DB.value];
+}
+
+function MOV_MEM_OFFSET(res_reg_code, memory_code, offset) {
+    let index = parseInt(memory_code, 2);
+    offset = parseInt(offset, 2);
+    getRegisterByCode(res_reg_code)[DB.value] = memory_db[index + offset][DB.value];
+}
+
+function MOV_MEM_OFFSET_REG(res_reg_code, memory_code, offset_reg_code) {
+    let index = parseInt(memory_code, 2);
+    let offset = getRegisterByCode(offset_reg_code)[DB.value];
+    getRegisterByCode(res_reg_code)[DB.value] = memory_db[index + offset][DB.value];
 }

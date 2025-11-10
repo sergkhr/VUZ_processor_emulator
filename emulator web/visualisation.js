@@ -18,9 +18,19 @@ const _dict_table = {
  */
 function updStTbl(register_type){
     _dict_table[register_type].innerHTML = '';
-    for (const [name, value] of Object.entries(_dict_name_to_binary[register_type])) {
-        _dict_table[register_type].innerHTML += `<span class="state-name">${name}:</span><span class="state-data">${value}</span><span class="state-data">${_dict_name_binary_to_state[register_type][value]}</span>`;
-    }
+    _dict_name_db[register_type].forEach(element => {
+        _dict_table[register_type].innerHTML += `
+        <span class="state-name">
+            ${element[DB.name]}:
+        </span>
+        <span class="state-data">
+            ${_dict_code_getter_db[register_type](element[DB.name])}
+        </span>
+        <span class="state-data">
+            ${element[DB.value]}
+        </span>
+        `;
+    });
 }
 function updateStateTables() { 
     updStTbl("register");
@@ -36,7 +46,7 @@ const highlighter = document.getElementById('highlighter');
  * Подсветка выполнЯЕМОЙ строки кода (== PC)
  */
 function highlightCurrentLine(lineNumber) {
-   
+    
     if (lineNumber < 0) {
         highlighter.style.display = 'none';
         return

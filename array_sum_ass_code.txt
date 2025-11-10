@@ -1,17 +1,28 @@
-n 5
-array 3 2 1 4 2
+VAR n 5 0
+ARR_ALLOC array 5 0
+MOV_LIT reg5 3 0
+SET_MEM_OFFSET array reg5 0
+MOV_LIT reg5 2 0
+SET_MEM_OFFSET array reg5 1
+MOV_LIT reg5 1 0
+SET_MEM_OFFSET array reg5 2
+MOV_LIT reg5 4 0
+SET_MEM_OFFSET array reg5 3
+MOV_LIT reg5 2 0
+SET_MEM_OFFSET array reg5 4
 
-MOV reg1 0 0
+MOV_LIT sum 0 0
 
-MOV reg2 0 0
+MOV_LIT iterator 0 0
+MOV_LIT reg5 1 0
 
 MOV_MEM_OFFSET reg4 n 0
 
 MARK M0 0 0
-MOV_MEM_OFFSET reg3 array reg2
-ADD reg1 reg1 reg3
-ADD reg2 reg2 1
-CMP 0 reg2 reg4
+MOV_MEM_OFFSET_REG reg3 array iterator
+ADD sum sum reg3
+ADD iterator iterator reg5
+CMP 0 iterator reg4
 JNZ M0 0 0
 
-MOV reg16 reg1 0
+MOV result sum 0
