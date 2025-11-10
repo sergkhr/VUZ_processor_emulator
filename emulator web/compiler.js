@@ -24,12 +24,19 @@ function compileCodeInput(){
         }
     });
 
+    _dict_name_db = { //обновление здесь 1 раз и после этого оно обновляется само... JS moment
+        "command": command_db,
+        "register": register_db,
+        "flag": flag_db,
+        "mark": mark_db,
+        "memory": memory_db
+    }
     return {done: true, code: compiled_code};
 }
 
 function compileCode(ass_code){
     let compiled_code = [];
-    console.warn(ass_code);
+    console.log(ass_code);
     ass_code.forEach((code_line, index) => {
         const target_length = 4;
         for (let i = code_line.length; i < target_length; i++) code_line.push("");
@@ -56,6 +63,7 @@ function setMark(mark_name, value="?"){
     let mark_code = getMarkCode(mark_name);
     if(!mark_code) mark_db.push([mark_name, "?"]);
     
+    mark_code = getMarkCode(mark_name);
     if(value !== "?") getMarkByCode(mark_code)[DB.value] = value;
 }
 
@@ -80,8 +88,9 @@ function compile_command(command_name, res_op1, op2, op3, index) {
     let compiled_command = command[DB.compile](res_op1, op2, op3, index);
     if (!compiled_command) return undefined;
 
-
-    command_line.concat(compiled_command);
+    compiled_command.forEach(element => {
+        command_line.push(element);
+    });
     return command_line;
 }
 
@@ -214,7 +223,6 @@ function compile_VAR(memory_name, literal, placeholder){
 
     let memory_code = getMemoryCode(memory_name);
     if(memory_code) return undefined; // аллокация уже существующей ячейки - error
-    console.log(memory_db);
     memory_db.push([memory_name, "?"]);
     command_tail.push(getMemoryCode(memory_name));
 
@@ -278,6 +286,24 @@ function compile_MOV_MEM_OFFSET(res_reg_name, memory_name, offset) {
     let literal_code = parseInt(offset, 10).toString(2).padStart(8, "0");
     if(!literal_code || literal_code.length !== 8) return undefined;
     command_tail.push(literal_code);
+
+    return command_tail;
+}
+
+function compile_MOV_MEM_OFFSET_REG(res_reg_name, memory_name, offset_reg_name) {
+    let command_tail = [];
+
+    let res_reg_code = getRegisterCode(res_reg_name);
+    if(!res_reg_code) return undefined;
+    command_tail.push(res_reg_code);
+
+    let memory_code = getMemoryCode(memory_name);
+    if(!memory_code) return undefined;
+    command_tail.push(memory_code);
+
+    let offset_reg_code = getRegisterCode(offset_reg_name);
+    if(!offset_reg_code) return undefined;
+    command_tail.push(offset_reg_code);
 
     return command_tail;
 }

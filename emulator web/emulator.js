@@ -63,18 +63,21 @@ function reset() {
  * Главная функция выполнения программы
  */
 function runCode() {
-    // 1. Парсим код из textarea
+    resetRegMemFlagPC();
+    
+    // Парсим код из textarea
     let compilerResult = compileCodeInput();
+    console.log(compilerResult);
+    console.log(memory_db);
+    console.log(mark_db);
     if(!compilerResult.done) return false;
     ass_code = compilerResult.code;
 
-    // 2. Сбрасываем состояния эмулятора, но не код, подсвечиваем, блочим на редактирование
-    resetRegMemFlagPC();
     updateStateTables();
     highlightCurrentLine(0); // начало подсветки
     document.getElementById('codeInput').readOnly = true;
 
-    // 3. Выполняеммммм
+    // Выполняеммммм
     if (getExecSpeed() > 0) {
         isRunning = true;
         // Блочим кнопки, пока прога выполняется
@@ -183,13 +186,16 @@ function incrementPC() {
  * Маршрутизатор команд
  */
 function call_command(command_code, res_op1, op2, op3) {
-    if (command_code === "") incrementPC();
+    if (command_code === ""){
+        incrementPC();
+        return;
+    } 
 
     const old_PC = PC;
     const command = getCommandByCode(command_code);
     
     if(command) command[DB.call](res_op1, op2, op3);
-    else console.error("Unknown command: ", command_code, " named: ", command[DB.name]);
+    else console.error("Unknown command: ", command_code);
 
     if (PC === old_PC) incrementPC(); //этого достаточно, это основное перемещение программы
 }
@@ -203,18 +209,19 @@ function call_command(command_code, res_op1, op2, op3) {
 
 
 function updateFlags(last_command_result){
-    getFlagByCode(getFlagCode("ZF"))[DB.value] = (last_command_result === 0) ? 1 : 0;
+    let parsed_res = parseInt(last_command_result, 10);
+    getFlagByCode(getFlagCode("ZF"))[DB.value] = ((parsed_res === 0) ? 1 : 0);
     //TODO CF
     return last_command_result;
 }
 
 
 
-function MOV(res_reg_code, reg_code) {
+function MOV(res_reg_code, reg_code, placeholder) {
     getRegisterByCode(res_reg_code)[DB.value] = getRegisterByCode(reg_code)[DB.value];
 }
 
-function MOV_LIT(res_reg_code, literal){
+function MOV_LIT(res_reg_code, literal, placeholder){
     literal = parseInt(literal, 2);
     getRegisterByCode(res_reg_code)[DB.value] = literal;
 }
@@ -224,20 +231,20 @@ function ADD(res_reg_code, reg1_code, reg2_code) {
     getRegisterByCode(res_reg_code)[DB.value] = updateFlags(result);
 }
 
-function CMP(reg1_code, reg2_code) {
+function CMP(placeholder, reg1_code, reg2_code) {
     let result = getRegisterByCode(reg1_code)[DB.value] - getRegisterByCode(reg2_code)[DB.value];
     updateFlags(result);
 }
 
 
 // PC++ after successfull jump i needed to not execute the MARK command again
-function JMP(mark_code) {
+function JMP(mark_code, placeholder, placeholder) {
     let jump_pos = getMarkByCode(mark_code)[DB.value];
     PC = parseInt(jump_pos, 10);
     incrementPC();
 }
 
-function JZ(mark_code) {
+function JZ(mark_code, placeholder, placeholder) {
     if (getFlagByCode(getFlagCode("ZF"))[DB.value] === 1) {
         let jump_pos = getMarkByCode(mark_code)[DB.value];
         PC = parseInt(jump_pos, 10);
@@ -245,7 +252,7 @@ function JZ(mark_code) {
     }
 }
 
-function JNZ(mark_code) {
+function JNZ(mark_code, placeholder, placeholder) {
     if (getFlagByCode(getFlagCode("ZF"))[DB.value] === 0) {
         let jump_pos = getMarkByCode(mark_code)[DB.value];
         PC = parseInt(jump_pos, 10);
@@ -253,24 +260,33 @@ function JNZ(mark_code) {
     }
 }
 
-function MARK(mark_code) {
+function MARK(mark_code, placeholder, placeholder) {
     console.log("зачем MARK выполняется после компиляции?");
 }
 
-function VAR(memory_code, literal){
+function VAR(memory_code, literal, placeholder){
     literal = parseInt(literal, 2);
     getMemoryByCode(memory_code)[DB.value] = literal;
 }
 
-function ARR_ALLOC(memory_code, length){
+function ARR_ALLOC(memory_code, length, placeholder){
     console.log("зачем ARR_ALLOC выполняется, если аллокация на компиляции?");
 }
+
 function SET_MEM_OFFSET(memory_code, reg_code, offset){
     let index = parseInt(memory_code, 2);
+    offset = parseInt(offset, 2);
     memory_db[index + offset][DB.value] = getRegisterByCode(reg_code)[DB.value];
 }
 
 function MOV_MEM_OFFSET(res_reg_code, memory_code, offset) {
     let index = parseInt(memory_code, 2);
+    offset = parseInt(offset, 2);
+    getRegisterByCode(res_reg_code)[DB.value] = memory_db[index + offset][DB.value];
+}
+
+function MOV_MEM_OFFSET_REG(res_reg_code, memory_code, offset_reg_code) {
+    let index = parseInt(memory_code, 2);
+    let offset = getRegisterByCode(offset_reg_code)[DB.value];
     getRegisterByCode(res_reg_code)[DB.value] = memory_db[index + offset][DB.value];
 }

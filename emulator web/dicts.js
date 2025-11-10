@@ -33,18 +33,19 @@ const DB = {
 //БАЗА ДАННЫХ КОМАНД
 //название - функция эмулятора - функция компилятора
 const command_db = [
-    ["MOV",            MOV,            compile_MOV],
-    ["MOV_LIT",        MOV_LIT,        compile_MOV_LIT],
-    ["ADD",            ADD,            compile_ADD],
-    ["CMP",            CMP,            compile_CMP],
-    ["JMP",            JMP,            compile_JMP],
-    ["JZ",             JZ,             compile_JZ],
-    ["JNZ",            JNZ,            compile_JNZ],
-    ["MARK",           MARK,           compile_MARK],
-    ["VAR",            VAR,            compile_VAR],
-    ["ARR_ALLOC",      ARR_ALLOC,      compile_ARR_ALLOC],
-    ["SET_MEM_OFFSET", SET_MEM_OFFSET, compile_SET_MEM_OFFSET],
-    ["MOV_MEM_OFFSET", MOV_MEM_OFFSET, compile_MOV_MEM_OFFSET],
+    ["MOV",                MOV,                compile_MOV],
+    ["MOV_LIT",            MOV_LIT,            compile_MOV_LIT],
+    ["ADD",                ADD,                compile_ADD],
+    ["CMP",                CMP,                compile_CMP],
+    ["JMP",                JMP,                compile_JMP],
+    ["JZ",                 JZ,                 compile_JZ],
+    ["JNZ",                JNZ,                compile_JNZ],
+    ["MARK",               MARK,               compile_MARK],
+    ["VAR",                VAR,                compile_VAR],
+    ["ARR_ALLOC",          ARR_ALLOC,          compile_ARR_ALLOC],
+    ["SET_MEM_OFFSET",     SET_MEM_OFFSET,     compile_SET_MEM_OFFSET],
+    ["MOV_MEM_OFFSET",     MOV_MEM_OFFSET,     compile_MOV_MEM_OFFSET],
+    ["MOV_MEM_OFFSET_REG", MOV_MEM_OFFSET_REG, compile_MOV_MEM_OFFSET_REG],
 ];
 
 
@@ -88,13 +89,14 @@ let flag_db = [
 ];
 
 
-let _dict_name_db = {
+let _dict_name_db = { //почему-то это не ссылки
     "command": command_db,
     "register": register_db,
     "flag": flag_db,
     "mark": mark_db,
     "memory": memory_db
 }
+
 
 
 
@@ -143,7 +145,7 @@ function getCommandByName(command_name) {
 function getCommandByCode(code) {
     const index = parseInt(code, 2);
     if (isNaN(index) || index < 0 || index >= command_db.length) {
-        console.error("Invalid code:", code);
+        console.error("Invalid command code:", code);
         return undefined;
     }
 
@@ -285,6 +287,13 @@ function getFlagByCode(code) {
 // ====================================================
 
 
+let _dict_code_getter_db = {
+    "command": getCommandCode,
+    "register": getRegisterCode,
+    "flag": getFlagCode,
+    "mark": getMarkCode,
+    "memory": getMemoryCode,
+}
 
 
 /**
