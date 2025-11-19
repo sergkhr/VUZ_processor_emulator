@@ -36,7 +36,7 @@ function compileCodeInput(){
 
 function compileCode(ass_code){
     let compiled_code = [];
-    console.log(ass_code);
+    // console.log(ass_code);
     ass_code.forEach((code_line, index) => {
         const target_length = 4;
         for (let i = code_line.length; i < target_length; i++) code_line.push("");
@@ -215,7 +215,7 @@ function compile_MARK(mark_name, placeholder1, placeholder2, index) {
 
     command_tail.push("00000000");
 
-    return command_tail;
+        return command_tail;
 }
 
 function compile_VAR(memory_name, literal, placeholder){

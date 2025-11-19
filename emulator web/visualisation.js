@@ -14,6 +14,19 @@ const _dict_table = {
 }
 
 /**
+ * Вывод скомпилированного кода в compileOutput
+ */
+function updateCompiledOutput(compilerResult) {
+    let tmp_arr = [];
+    let tmp = "";
+    for (let e of compilerResult.code) {
+        tmp_arr.push(e.join(" "));
+    }
+    tmp = tmp_arr.join("\n");
+    document.getElementById("compileOutput").value = tmp;
+}
+
+/**
  * Создание/обновление таблиц регистров и памяти
  */
 function updStTbl(register_type){
@@ -40,7 +53,27 @@ function updateStateTables() {
 }
 
 const codeInput = document.getElementById('codeInput');
-const highlighter = document.getElementById('highlighter');
+const compileOutput = document.getElementById('compileOutput');
+const highlighter_code = document.getElementById('highlighter-code');
+const highlighter_compile = document.getElementById('highlighter-compile');
+
+codeInput.addEventListener('scroll', () => {
+    syncScroll(highlighter_code, codeInput);
+})
+
+compileOutput.addEventListener('scroll', () => {
+    syncScroll(highlighter_compile, compileOutput);
+})
+
+/**
+ * Синхронизация позиции подсветки при скорлле
+ */
+function syncScroll(highlighter, inout) {
+    // TODO: есть баги, подсветка отображается у невидимых строк
+    if (highlighter.style.display !== 'none') {
+        highlighter.style.transform = `translateY(-${inout.scrollTop}px)`;
+    }
+}
 
 /**
  * Подсветка выполнЯЕМОЙ строки кода (== PC)
@@ -48,24 +81,22 @@ const highlighter = document.getElementById('highlighter');
 function highlightCurrentLine(lineNumber) {
     
     if (lineNumber < 0) {
-        highlighter.style.display = 'none';
+        highlighter_code.style.display = 'none';
+        highlighter_compile.style.display = 'none';
         return
     }
 
-    const lineHeight = parseFloat(getComputedStyle(codeInput).lineHeight);
-    const newTop = lineNumber * lineHeight + 15; // padding-top=15
+    const lineHeight_code = parseFloat(getComputedStyle(codeInput).lineHeight);
+    const lineHeight_compile = parseFloat(getComputedStyle(compileOutput).lineHeight);
+    const newTop_code = lineNumber * lineHeight_code + 15; // padding-top=15
+    const newTop_compiler = lineNumber * lineHeight_compile + 15; // padding-top=15
 
-    highlighter.style.top = `${newTop}px`;
-    highlighter.style.display = 'block';
+    highlighter_code.style.top = `${newTop_code}px`;
+    highlighter_code.style.display = 'block';
+
+    highlighter_compile.style.top = `${newTop_compiler}px`;
+    highlighter_compile.style.display = 'block';
     //TODO: добавить после подсветки строки асс-кода подсветку измененного регистра или памяти
-}
-
-/**
- * Синхронизация позиции подсветки при скорлле
- */
-function syncScroll() {
-    // TODO: есть баги, подсветка отображается у невидимых строк
-    highlighter.style.transform = `translateY(-${codeInput.scrollTop}px)`;
 }
 
 /**

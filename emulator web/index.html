@@ -22,11 +22,24 @@
             </div>
             <pre id="output"></pre>
 
-            <h2>Assembly code</h2>
-            <div class="editor-wrapper">
-                <textarea id="codeInput" placeholder="Please, paste your assembly code here..."></textarea>
-                <div id="highlighter"></div>
+            <div class="code-container">
+                <div class="code-wrapper">
+                    <h2>Assembly code</h2>
+                    <div class="editor-wrapper">
+                        <textarea id="codeInput" placeholder="Please, paste your assembly code here..."></textarea>
+                        <div id="highlighter-code"></div>
+                    </div>
+                </div>
+                
+                <div class="code-wrapper">
+                    <h2>Compiled code</h2>
+                    <div class="editor-wrapper">
+                        <textarea id="compileOutput" readonly placeholder="Wait for compiling code..."></textarea>
+                        <div id="highlighter-compile"></div>
+                    </div>
+                </div>
             </div>
+            
         </section>
 
         <aside id="state-panel">

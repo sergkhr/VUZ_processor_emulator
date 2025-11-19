@@ -33,7 +33,7 @@ input[type="number"] {
     overflow: hidden;
 }
 
-#codeInput, #highlighter {
+#codeInput, #compileOutput, #highlighter-code, #highlighter-compile {
     padding: 15px;
     font-family: monospace;
     font-size: 16px;
@@ -42,7 +42,7 @@ input[type="number"] {
     box-sizing: border-box; /* Чтобы padding не влиял на общую ширину/высоту */
 }
 
-#codeInput {
+#codeInput, #compileOutput {
     position: relative; /* Чтобы быть над абсолютным элементом */
     z-index: 1;         /* Размещаем над подсветкой */
     width: 100%;
@@ -56,7 +56,7 @@ input[type="number"] {
     caret-color: white;            /* Делаем курсор видимым на темном фоне */
 }
 
-#highlighter {
+#highlighter-code, #highlighter-compile {
     position: absolute; /* Позиционируем относительно wrapper */
     z-index: 2;         /* Размещаем под текстовым полем */
     top: 0;             /* Начальная позиция */
@@ -67,4 +67,13 @@ input[type="number"] {
     transition: top 0.02s ease; /* Плавное движение */
     display: none; /* Изначально подсветка скрыта */
     padding: 0;
+}
+
+.code-container {
+    display: flex;
+    gap: 10px;
+}
+
+.code-wrapper {
+    flex-grow: 1;
 }

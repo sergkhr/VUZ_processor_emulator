@@ -14,14 +14,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const stepBtn    = document.getElementById('stepBtn');
     const resetBtn   = document.getElementById('resetBtn');
     const speedInput = document.getElementById('speedInput');
-    const codeInput = document.getElementById('codeInput');
 
     // обработчики событий
     runBtn.addEventListener('click', runCode);
     stepBtn.addEventListener('click', executeStep);
     resetBtn.addEventListener('click', reset);
     speedInput.addEventListener('change', processExecSpeed);
-    codeInput.addEventListener('scroll', syncScroll);
 
     // сбрасываем все состояния
     reset();
@@ -59,6 +57,7 @@ function reset() {
 // ====================================================
 
 
+
 /**
  * Главная функция выполнения программы
  */
@@ -67,12 +66,13 @@ function runCode() {
     
     // Парсим код из textarea
     let compilerResult = compileCodeInput();
-    console.log(compilerResult);
-    console.log(memory_db);
-    console.log(mark_db);
+    // console.log(compilerResult);
+    // console.log(memory_db);
+    // console.log(mark_db);
     if(!compilerResult.done) return false;
     ass_code = compilerResult.code;
 
+    updateCompiledOutput(compilerResult);
     updateStateTables();
     highlightCurrentLine(0); // начало подсветки
     document.getElementById('codeInput').readOnly = true;
