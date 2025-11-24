@@ -75,6 +75,8 @@ function runCode() {
     updateCompiledOutput(compilerResult);
     updateStateTables();
     highlightCurrentLine(0); // начало подсветки
+    syncScroll(document.getElementById('highlighter-code'), document.getElementById('codeInput'));
+    syncScroll(document.getElementById('highlighter-compile'), document.getElementById('compileOutput'));
     document.getElementById('codeInput').readOnly = true;
 
     // Выполняеммммм
