@@ -197,9 +197,23 @@ function call_command(command_code, res_op1, op2, op3) {
     const command = getCommandByCode(command_code);
     
     if(command) command[DB.call](res_op1, op2, op3);
-    else console.error("Unknown command: ", command_code);
+    else console.error("Unknown command: ", command_code);        // TODO: console error
 
     if (PC === old_PC) incrementPC(); //этого достаточно, это основное перемещение программы
+}
+
+/**
+ * Преобразует 8-битную бинарную строку в знаковое число (-128...127)
+ * "00000001" -> 1
+ * "11111111" -> -1
+ */
+function parseSignedByte(binaryString) {
+    let val = parseInt(binaryString, 2);
+    // Если старший бит (128) установлен, значит число отрицательное
+    if (val > 127) {
+        val -= 256;
+    }
+    return val;
 }
 
 
@@ -211,9 +225,21 @@ function call_command(command_code, res_op1, op2, op3) {
 
 
 function updateFlags(last_command_result){
-    let parsed_res = parseInt(last_command_result, 10);
-    getFlagByCode(getFlagCode("ZF"))[DB.value] = ((parsed_res === 0) ? 1 : 0);
-    //TODO CF
+    // Эмуляция 8-битного переполнения.
+    // Если результат 128, он должен стать -128.
+    // Если результат -129, он должен стать 127.
+    while (last_command_result > 127) last_command_result -= 256;
+    while (last_command_result < -128) last_command_result += 256;
+
+    // Zero Flag (ZF) - если результат 0
+    let zf_code = getFlagCode("ZF");
+    if (zf_code) getFlagByCode(zf_code)[DB.value] = ((last_command_result === 0) ? 1 : 0);
+    
+    // Sign Flag (SF) - если результат отрицательный
+    // Убедитесь, что вы добавили "SF" в flag_db в файле dicts.js!
+    let sf_code = getFlagCode("SF");
+    if (sf_code) getFlagByCode(sf_code)[DB.value] = ((last_command_result < 0) ? 1 : 0);
+
     return last_command_result;
 }
 
@@ -224,18 +250,26 @@ function MOV(res_reg_code, reg_code, placeholder) {
 }
 
 function MOV_LIT(res_reg_code, literal, placeholder){
-    literal = parseInt(literal, 2);
-    getRegisterByCode(res_reg_code)[DB.value] = literal;
+    // Читаем литерал как знаковое число
+    let val = parseSignedByte(literal);
+    getRegisterByCode(res_reg_code)[DB.value] = val;
 }
 
 function ADD(res_reg_code, reg1_code, reg2_code) {
-    let result = getRegisterByCode(reg1_code)[DB.value] + getRegisterByCode(reg2_code)[DB.value];
+    let val1 = getRegisterByCode(reg1_code)[DB.value];
+    let val2 = getRegisterByCode(reg2_code)[DB.value];
+    
+    let result = val1 + val2;
+    // updateFlags обрежет лишние биты и выставит флаги
     getRegisterByCode(res_reg_code)[DB.value] = updateFlags(result);
 }
 
 function CMP(placeholder, reg1_code, reg2_code) {
-    let result = getRegisterByCode(reg1_code)[DB.value] - getRegisterByCode(reg2_code)[DB.value];
-    updateFlags(result);
+    let val1 = getRegisterByCode(reg1_code)[DB.value];
+    let val2 = getRegisterByCode(reg2_code)[DB.value];
+    
+    let result = val1 - val2;
+    updateFlags(result); // Только обновляем флаги, результат не сохраняем
 }
 
 
@@ -263,32 +297,61 @@ function JNZ(mark_code, placeholder, placeholder) {
 }
 
 function MARK(mark_code, placeholder, placeholder) {
-    console.log("зачем MARK выполняется после компиляции?");
+    // TODO: console log
+    // console.log("зачем MARK выполняется после компиляции?");
 }
 
 function VAR(memory_code, literal, placeholder){
-    literal = parseInt(literal, 2);
-    getMemoryByCode(memory_code)[DB.value] = literal;
+    // Инициализация переменной тоже должна понимать знак
+    let val = parseSignedByte(literal);
+    getMemoryByCode(memory_code)[DB.value] = val;
 }
 
 function ARR_ALLOC(memory_code, length, placeholder){
-    console.log("зачем ARR_ALLOC выполняется, если аллокация на компиляции?");
+    // TODO: console log
+    // console.log("зачем ARR_ALLOC выполняется, если аллокация на компиляции?");
 }
 
 function SET_MEM_OFFSET(memory_code, reg_code, offset){
     let index = parseInt(memory_code, 2);
-    offset = parseInt(offset, 2);
-    memory_db[index + offset][DB.value] = getRegisterByCode(reg_code)[DB.value];
+    // Смещение тоже может быть отрицательным (теоретически)
+    let offsetVal = parseSignedByte(offset); 
+    
+    // Проверка границ массива памяти, чтобы не крашнуть JS
+    let targetIndex = index + offsetVal;
+    if (memory_db[targetIndex]) {
+        memory_db[targetIndex][DB.value] = getRegisterByCode(reg_code)[DB.value];
+    } else {
+        // TODO: console error
+        console.error("Runtime Error: Memory access out of bounds");
+    }
 }
 
 function MOV_MEM_OFFSET(res_reg_code, memory_code, offset) {
     let index = parseInt(memory_code, 2);
-    offset = parseInt(offset, 2);
-    getRegisterByCode(res_reg_code)[DB.value] = memory_db[index + offset][DB.value];
+    let offsetVal = parseSignedByte(offset);
+    
+    let targetIndex = index + offsetVal;
+    if (memory_db[targetIndex]) {
+        getRegisterByCode(res_reg_code)[DB.value] = memory_db[targetIndex][DB.value];
+    } else {
+        // TODO: console error
+        console.error("Runtime Error: Memory access out of bounds");
+        getRegisterByCode(res_reg_code)[DB.value] = 0;
+    }
 }
 
 function MOV_MEM_OFFSET_REG(res_reg_code, memory_code, offset_reg_code) {
     let index = parseInt(memory_code, 2);
+    // Значение в регистре смещения уже знаковое (мы храним числа в JS формате)
     let offset = getRegisterByCode(offset_reg_code)[DB.value];
-    getRegisterByCode(res_reg_code)[DB.value] = memory_db[index + offset][DB.value];
+    
+    let targetIndex = index + offset;
+    if (memory_db[targetIndex]) {
+        getRegisterByCode(res_reg_code)[DB.value] = memory_db[targetIndex][DB.value];
+    } else {
+        // TODO: console error
+        console.error("Runtime Error: Memory access out of bounds");
+        getRegisterByCode(res_reg_code)[DB.value] = 0;
+    }
 }

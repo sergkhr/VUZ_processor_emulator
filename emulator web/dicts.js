@@ -36,6 +36,8 @@ const command_db = [
     ["MOV",                MOV,                compile_MOV],
     ["MOV_LIT",            MOV_LIT,            compile_MOV_LIT],
     ["ADD",                ADD,                compile_ADD],
+    // ["ADC",                ADC,                compile_ADD],
+    // ["MUL",                MUL,                compile_ADD],    
     ["CMP",                CMP,                compile_CMP],
     ["JMP",                JMP,                compile_JMP],
     ["JZ",                 JZ,                 compile_JZ],
@@ -114,7 +116,8 @@ let _dict_name_db = { //почему-то это не ссылки
 function getCommandCode(command_name) {
     const index = command_db.findIndex(cmd => cmd[0] === command_name);
     if (index === -1) {
-        console.error("Unknown command:", command_name);
+        // TODO: console error
+        // console.error("Unknown command:", command_name);
         return undefined;
     }
 
@@ -130,7 +133,8 @@ function getCommandCode(command_name) {
 function getCommandByName(command_name) {
     const index = command_db.findIndex(cmd => cmd[0] === command_name);
     if (index === -1) {
-        console.error("Unknown command:", command_name);
+        // TODO: console error
+        // console.error("Unknown command:", command_name);
         return null;
     }
 
@@ -145,7 +149,8 @@ function getCommandByName(command_name) {
 function getCommandByCode(code) {
     const index = parseInt(code, 2);
     if (isNaN(index) || index < 0 || index >= command_db.length) {
-        console.error("Invalid command code:", code);
+        // TODO: console error
+        // console.error("Invalid command code:", code);
         return undefined;
     }
 
@@ -162,7 +167,8 @@ function getCommandByCode(code) {
 function getRegisterCode(name) {
     const index = register_db.findIndex(reg => reg[0] === name);
     if (index === -1) {
-        console.error("Unknown register:", name);
+        // TODO: console error
+        // console.error("Unknown register:", name);
         return undefined;
     }
     return index.toString(2).padStart(8, "0");
@@ -176,7 +182,8 @@ function getRegisterCode(name) {
 function getRegisterByCode(code) {
     const index = parseInt(code, 2);
     if (isNaN(index) || index < 0 || index >= register_db.length) {
-        console.error("Invalid register code:", code);
+        // TODO: console error
+        // console.error("Invalid register code:", code);
         return null;
     }
     return register_db[index];
@@ -193,7 +200,9 @@ function getRegisterByCode(code) {
 function getMemoryCode(name) {
     const index = memory_db.findIndex(cell => cell[DB.name] === name);
     if (index === -1) {
-        console.error("Unknown memory address:", name);
+        // TODO: console error
+        // console.error("Unknown memory address:", name);
+        // console.warn("Existing memory addresses:", memory_db.map(cell => cell[DB.name]));
         return undefined;
     }
     return index.toString(2).padStart(8, "0");
@@ -207,7 +216,8 @@ function getMemoryCode(name) {
 function getMemoryByCode(code) {
     const index = parseInt(code, 2);
     if (isNaN(index) || index < 0 || index >= memory_db.length) {
-        console.error("Invalid memory code:", code);
+        // TODO: console error
+        // console.error("Invalid memory code:", code);
         return null;
     }
     return memory_db[index];
@@ -223,7 +233,8 @@ function getMemoryByCode(code) {
 function getMarkCode(name) {
     const index = mark_db.findIndex(mark => mark[0] === name);
     if (index === -1) {
-        console.error("Unknown mark:", name);
+        // TODO: console error
+        // console.error("Unknown mark:", name);
         return undefined;
     }
     return index.toString(2).padStart(8, "0");
@@ -237,7 +248,8 @@ function getMarkCode(name) {
 function getMarkByCode(code) {
     const index = parseInt(code, 2);
     if (isNaN(index) || index < 0 || index >= mark_db.length) {
-        console.error("Invalid mark code:", code);
+        // TODO: console error
+        // console.error("Invalid mark code:", code);
         return null;
     }
     return mark_db[index];
@@ -254,7 +266,8 @@ function getMarkByCode(code) {
 function getFlagCode(name) {
     const index = flag_db.findIndex(flag => flag[0] === name);
     if (index === -1) {
-        console.error("Unknown flag:", name);
+        // TODO: console error
+        // console.error("Unknown flag:", name);
         return undefined;
     }
     return index.toString(2).padStart(4, "0");
@@ -268,7 +281,8 @@ function getFlagCode(name) {
 function getFlagByCode(code) {
     const index = parseInt(code, 2);
     if (isNaN(index) || index < 0 || index >= flag_db.length) {
-        console.error("Invalid flag code:", code);
+        // TODO: console error
+        // console.error("Invalid flag code:", code);
         return null;
     }
     return flag_db[index];

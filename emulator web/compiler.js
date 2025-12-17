@@ -120,7 +120,7 @@ function compile_MOV_LIT(res_reg_name, literal, placeholder){
     if(!res_reg_code) return undefined;
     command_tail.push(res_reg_code);
 
-    let literal_code = parseInt(literal, 10).toString(2).padStart(8, "0");
+    let literal_code = toTwosComplementBinary(literal);
     if(!literal_code || literal_code.length !== 8) return undefined;
     command_tail.push(literal_code);
 
@@ -226,7 +226,7 @@ function compile_VAR(memory_name, literal, placeholder){
     memory_db.push([memory_name, "?"]);
     command_tail.push(getMemoryCode(memory_name));
 
-    let literal_code = parseInt(literal, 10).toString(2).padStart(8, "0");
+    let literal_code = toTwosComplementBinary(literal);
     if(!literal_code || literal_code.length !== 8) return undefined;
     command_tail.push(literal_code);
 
@@ -245,7 +245,7 @@ function compile_ARR_ALLOC(memory_name, length, placeholder){
     }
     command_tail.push(getMemoryCode(memory_name));
 
-    let literal_code = parseInt(length, 10).toString(2).padStart(8, "0");
+    let literal_code = toTwosComplementBinary(length);
     if(!literal_code || literal_code.length !== 8) return undefined;
     command_tail.push(literal_code);
 
@@ -265,7 +265,7 @@ function compile_SET_MEM_OFFSET(memory_name, reg_name, offset){
     if(!reg_code) return undefined;
     command_tail.push(reg_code);
 
-    let literal_code = parseInt(offset, 10).toString(2).padStart(8, "0");
+    let literal_code = toTwosComplementBinary(offset);
     if(!literal_code || literal_code.length !== 8) return undefined;
     command_tail.push(literal_code);
 
@@ -283,7 +283,7 @@ function compile_MOV_MEM_OFFSET(res_reg_name, memory_name, offset) {
     if(!memory_code) return undefined;
     command_tail.push(memory_code);
 
-    let literal_code = parseInt(offset, 10).toString(2).padStart(8, "0");
+    let literal_code = toTwosComplementBinary(offset);
     if(!literal_code || literal_code.length !== 8) return undefined;
     command_tail.push(literal_code);
 
@@ -306,4 +306,13 @@ function compile_MOV_MEM_OFFSET_REG(res_reg_name, memory_name, offset_reg_name) 
     command_tail.push(offset_reg_code);
 
     return command_tail;
+}
+
+
+// Преобразует число (например, -5) в 8-битную бинарную строку ("11111011")
+function toTwosComplementBinary(value) {
+    let num = parseInt(value, 10);
+    // & 0xFF обрезает число до 8 бит и корректно обрабатывает отрицательные числа
+    // >>> 0 заставляет JS трактовать число как беззнаковое для корректного toString
+    return (num >>> 0 & 0xFF).toString(2).padStart(8, "0");
 }
