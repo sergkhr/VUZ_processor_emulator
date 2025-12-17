@@ -264,6 +264,20 @@ function ADD(res_reg_code, reg1_code, reg2_code) {
     getRegisterByCode(res_reg_code)[DB.value] = updateFlags(result);
 }
 
+function MUL(res_reg_code, reg1_code, reg2_code) {
+    // Получаем значения из регистров (они уже могут быть отрицательными благодаря parseSignedByte)
+    let val1 = getRegisterByCode(reg1_code)[DB.value];
+    let val2 = getRegisterByCode(reg2_code)[DB.value];
+    
+    // Умножаем
+    let result = val1 * val2;
+    
+    // Функция updateFlags автоматически:
+    // 1. Обрежет результат до 8 бит (эмуляция переполнения)
+    // 2. Обновит флаги ZF (ноль) и SF (знак)
+    getRegisterByCode(res_reg_code)[DB.value] = updateFlags(result);
+}
+
 function CMP(placeholder, reg1_code, reg2_code) {
     let val1 = getRegisterByCode(reg1_code)[DB.value];
     let val2 = getRegisterByCode(reg2_code)[DB.value];

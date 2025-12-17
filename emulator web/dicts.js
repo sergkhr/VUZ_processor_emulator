@@ -37,7 +37,7 @@ const command_db = [
     ["MOV_LIT",            MOV_LIT,            compile_MOV_LIT],
     ["ADD",                ADD,                compile_ADD],
     // ["ADC",                ADC,                compile_ADD],
-    // ["MUL",                MUL,                compile_ADD],    
+    ["MUL",                MUL,                compile_ADD],    
     ["CMP",                CMP,                compile_CMP],
     ["JMP",                JMP,                compile_JMP],
     ["JZ",                 JZ,                 compile_JZ],
