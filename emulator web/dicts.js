@@ -42,6 +42,7 @@ const command_db = [
     ["JMP",                JMP,                compile_JMP],
     ["JZ",                 JZ,                 compile_JZ],
     ["JNZ",                JNZ,                compile_JNZ],
+    ["JS",                 JS,                 compile_JZ],
     ["MARK",               MARK,               compile_MARK],
     ["VAR",                VAR,                compile_VAR],
     ["ARR_ALLOC",          ARR_ALLOC,          compile_ARR_ALLOC],
@@ -68,7 +69,7 @@ let register_db = [
     ["reg12", 0],
     ["reg13", 0],
     ["reg14", 0],
-    ["reg15", 0],
+    ["EXT", 0],
     ["result", 0]
 ];
 
@@ -87,7 +88,8 @@ let mark_db = [];
 // название флага - значение (0 или 1)
 let flag_db = [
     ["ZF", 0],
-    ["CF", 0]
+    // ["CF", 0],
+    ["SF", 0]
 ];
 
 

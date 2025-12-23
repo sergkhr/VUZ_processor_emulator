@@ -216,6 +216,43 @@ function parseSignedByte(binaryString) {
     return val;
 }
 
+/**
+ * Сохраняет 16-битный результат:
+ * Младший байт -> в целевой регистр (res_reg_code)
+ * Старший байт -> в регистр EXT
+ */
+function writeDoubleByteResult(res_reg_code, fullResult) {
+    // 1. Обработка JS-числа в 16-битное целое (обрезаем лишнее)
+    // Это работает и для отрицательных чисел (Two's complement)
+    let safeResult = fullResult & 0xFFFF; 
+
+    // 2. Выделяем младший байт (Low Byte)
+    // Если число было отрицательным, здесь получится его 8-битное представление
+    let lowByte = safeResult & 0xFF;
+
+    // 3. Выделяем старший байт (High Byte)
+    let highByte = (safeResult >> 8) & 0xFF;
+
+    // 4. Корректируем знаки для JS (чтобы в регистрах лежали числа -128..127, а не 128..255)
+    // Используем вспомогательную логику (можно упростить, если parseSignedByte уже есть)
+    if (lowByte > 127) lowByte -= 256;
+    if (highByte > 127) highByte -= 256;
+
+    // 5. Запись младшего байта в целевой регистр
+    getRegisterByCode(res_reg_code)[DB.value] = lowByte;
+
+    // 6. Запись старшего байта в регистр EXT
+    // Находим код регистра EXT динамически
+    let ext_code = getRegisterCode("EXT");
+    if (ext_code) {
+        getRegisterByCode(ext_code)[DB.value] = highByte;
+    }
+
+    // 7. Обновляем флаги (по младшему байту или по полному результату - зависит от архитектуры)
+    // Обычно флаги ставятся по результату, записанному в целевой регистр (Low Byte)
+    return updateFlags(lowByte); 
+}
+
 
 
 
@@ -236,7 +273,6 @@ function updateFlags(last_command_result){
     if (zf_code) getFlagByCode(zf_code)[DB.value] = ((last_command_result === 0) ? 1 : 0);
     
     // Sign Flag (SF) - если результат отрицательный
-    // Убедитесь, что вы добавили "SF" в flag_db в файле dicts.js!
     let sf_code = getFlagCode("SF");
     if (sf_code) getFlagByCode(sf_code)[DB.value] = ((last_command_result < 0) ? 1 : 0);
 
@@ -260,8 +296,9 @@ function ADD(res_reg_code, reg1_code, reg2_code) {
     let val2 = getRegisterByCode(reg2_code)[DB.value];
     
     let result = val1 + val2;
-    // updateFlags обрежет лишние биты и выставит флаги
-    getRegisterByCode(res_reg_code)[DB.value] = updateFlags(result);
+    
+    // Используем функцию записи в два регистра
+    writeDoubleByteResult(res_reg_code, result);
 }
 
 function MUL(res_reg_code, reg1_code, reg2_code) {
@@ -272,10 +309,8 @@ function MUL(res_reg_code, reg1_code, reg2_code) {
     // Умножаем
     let result = val1 * val2;
     
-    // Функция updateFlags автоматически:
-    // 1. Обрежет результат до 8 бит (эмуляция переполнения)
-    // 2. Обновит флаги ZF (ноль) и SF (знак)
-    getRegisterByCode(res_reg_code)[DB.value] = updateFlags(result);
+    // Записываем результат (Low -> res_reg, High -> EXT)
+    writeDoubleByteResult(res_reg_code, result);
 }
 
 function CMP(placeholder, reg1_code, reg2_code) {
@@ -304,6 +339,16 @@ function JZ(mark_code, placeholder, placeholder) {
 
 function JNZ(mark_code, placeholder, placeholder) {
     if (getFlagByCode(getFlagCode("ZF"))[DB.value] === 0) {
+        let jump_pos = getMarkByCode(mark_code)[DB.value];
+        PC = parseInt(jump_pos, 10);
+        incrementPC();
+    }
+}
+
+function JS(mark_code, placeholder, placeholder) {
+    let sf_code = getFlagCode("SF");
+    // Если флаг SF установлен (результат предыдущей операции отрицательный)
+    if (sf_code && getFlagByCode(sf_code)[DB.value] === 1) {
         let jump_pos = getMarkByCode(mark_code)[DB.value];
         PC = parseInt(jump_pos, 10);
         incrementPC();

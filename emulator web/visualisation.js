@@ -28,21 +28,64 @@ function updateCompiledOutput(compilerResult) {
 
 /**
  * Создание/обновление таблиц регистров и памяти
+ * Отображение DEC, HEX, BIN
  */
-function updStTbl(register_type){
-    _dict_table[register_type].innerHTML = '';
-    _dict_name_db[register_type].forEach(element => {
-        _dict_table[register_type].innerHTML += `
-        <span class="state-name">
-            ${element[DB.name]}:
-        </span>
-        <span class="state-data">
-            ${_dict_code_getter_db[register_type](element[DB.name])}
-        </span>
-        <span class="state-data">
-            ${element[DB.value]}
-        </span>
+function updStTbl(register_type) {
+    const table = _dict_table[register_type];
+    table.innerHTML = '';
+
+    // Генерируем заголовки в зависимости от типа таблицы
+    if (register_type === "register") {
+        // Для регистров 4 колонки
+        table.innerHTML += `
+            <div class="state-header">Name</div>
+            <div class="state-header">Dec</div>
+            <div class="state-header">Hex</div>
+            <div class="state-header">Bin</div>
         `;
+    } else {
+        // Для памяти и флагов оставляем старый формат (или упрощенный)
+        table.innerHTML += `
+            <div class="state-header">Name</div>
+            <div class="state-header">Addr/Code</div>
+            <div class="state-header">Value</div>
+        `;
+    }
+
+    _dict_name_db[register_type].forEach(element => {
+        const name = element[DB.name];
+        const val = element[DB.value];
+
+        // Получаем код (адрес) как раньше, для совместимости
+        const codeOrAddr = _dict_code_getter_db[register_type](element[DB.name]);
+
+        if (register_type === "register") {
+            // === ЛОГИКА ДЛЯ РЕГИСТРОВ (Dec, Hex, Bin) ===
+            
+            // DEC: Просто значение
+            let decStr = val.toString();
+
+            // HEX: Превращаем в байт (0-255), потом в Hex
+            let hexStr = (val >>> 0 & 0xFF).toString(16).toUpperCase().padStart(2, '0');
+
+            // BIN: Превращаем в байт, потом в Bin
+            let binStr = (val >>> 0 & 0xFF).toString(2).padStart(8, '0');
+
+            table.innerHTML += `
+                <div class="state-name">${name}</div>
+                <div class="state-data" style="color: black;">${decStr}</div>
+                <div class="state-data" style="color: #A0522D;">${hexStr}</div>
+                <div class="state-data state-bin" style="color: #006400;">${binStr}</div>
+            `;
+        } else {
+            // === ЛОГИКА ДЛЯ ПАМЯТИ, ФЛАГОВ И МЕТОК (Старая) ===
+            // Используем div вместо span, чтобы работало с CSS Grid
+            table.innerHTML += `
+                <div class="state-name">${name}</div>
+                <div class="state-data" style="color: #555;">${codeOrAddr}</div>
+                <div class="state-data">${val}</div>
+            `;
+        }
     });
 }
 function updateStateTables() { 
