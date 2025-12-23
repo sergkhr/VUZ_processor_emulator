@@ -36,7 +36,7 @@ const command_db = [
     ["MOV",                MOV,                compile_MOV],
     ["MOV_LIT",            MOV_LIT,            compile_MOV_LIT],
     ["ADD",                ADD,                compile_ADD],
-    // ["ADC",                ADC,                compile_ADD],
+    ["ADC",                ADC,                compile_ADD],
     ["MUL",                MUL,                compile_ADD],    
     ["CMP",                CMP,                compile_CMP],
     ["JMP",                JMP,                compile_JMP],
@@ -68,9 +68,9 @@ let register_db = [
     ["reg11", 0],
     ["reg12", 0],
     ["reg13", 0],
-    ["reg14", 0],
     ["EXT", 0],
-    ["result", 0]
+    ["result", 0],
+    ["result_EXT", 0]
 ];
 
 
@@ -88,7 +88,7 @@ let mark_db = [];
 // название флага - значение (0 или 1)
 let flag_db = [
     ["ZF", 0],
-    // ["CF", 0],
+    ["CF", 0],
     ["SF", 0]
 ];
 

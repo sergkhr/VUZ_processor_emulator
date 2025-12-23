@@ -28,7 +28,7 @@ function updateCompiledOutput(compilerResult) {
 
 /**
  * Создание/обновление таблиц регистров и памяти
- * Отображение DEC, HEX, BIN
+ * Отображение DEC, U-DEC, HEX, BIN
  */
 function updStTbl(register_type) {
     const table = _dict_table[register_type];
@@ -36,10 +36,11 @@ function updStTbl(register_type) {
 
     // Генерируем заголовки в зависимости от типа таблицы
     if (register_type === "register") {
-        // Для регистров 4 колонки
+        // Для регистров 5 колонок: Name | Dec | U-Dec | Hex | Bin
         table.innerHTML += `
             <div class="state-header">Name</div>
             <div class="state-header">Dec</div>
+            <div class="state-header">U-Dec</div>
             <div class="state-header">Hex</div>
             <div class="state-header">Bin</div>
         `;
@@ -62,8 +63,12 @@ function updStTbl(register_type) {
         if (register_type === "register") {
             // === ЛОГИКА ДЛЯ РЕГИСТРОВ (Dec, Hex, Bin) ===
             
-            // DEC: Просто значение
+            // DEC: Знаковое значение (как есть в JS, -128..127)
             let decStr = val.toString();
+
+            // U-DEC (New): Беззнаковое значение (0..255)
+            // val >>> 0 приводит к uint32, & 0xFF оставляет только младший байт
+            let uDecStr = (val >>> 0 & 0xFF).toString();
 
             // HEX: Превращаем в байт (0-255), потом в Hex
             let hexStr = (val >>> 0 & 0xFF).toString(16).toUpperCase().padStart(2, '0');
@@ -74,6 +79,7 @@ function updStTbl(register_type) {
             table.innerHTML += `
                 <div class="state-name">${name}</div>
                 <div class="state-data" style="color: black;">${decStr}</div>
+                <div class="state-data" style="color: #00008B;">${uDecStr}</div>
                 <div class="state-data" style="color: #A0522D;">${hexStr}</div>
                 <div class="state-data state-bin" style="color: #006400;">${binStr}</div>
             `;
@@ -93,6 +99,7 @@ function updateStateTables() {
     updStTbl("memory");
     updStTbl("flag");
     updStTbl("mark");
+    updateGlobalResultDisplay();
 }
 
 const codeInput = document.getElementById('codeInput');
@@ -148,4 +155,42 @@ function highlightCurrentLine(lineNumber) {
 function setButtonsDisabled(disabled) {
     document.getElementById('runBtn').disabled  = disabled;
     document.getElementById('stepBtn').disabled = disabled;
+}
+
+/**
+ * Обновляет главную ячейку результата на форме.
+ * DEC, HEX (16 bit), BIN (16 bit)
+ */
+function updateGlobalResultDisplay() {
+    const getRegVal = (name) => {
+        const reg = register_db.find(r => r[DB.name] === name);
+        return reg ? reg[DB.value] : 0;
+    };
+
+    // 1. Получаем значения (Low & High bytes)
+    let low = getRegVal("result") & 0xFF;
+    let high = getRegVal("result_EXT"); // Знак здесь важен для Dec
+
+    // 2. Склеиваем в 16-битное число
+    // (high << 8) | low
+    let combinedValue = (high << 8) | low;
+
+    // 3. Формирование строк
+    
+    // HEX: всегда 4 символа (FFFF)
+    let hexStr = (combinedValue >>> 0 & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+
+    // BIN: 16 бит (0000000000000000)
+    let rawBin = (combinedValue >>> 0 & 0xFFFF).toString(2).padStart(16, '0');
+    // Разбиваем на два байта для красоты: "00000000 00000000"
+    let binStr = rawBin.slice(0, 8) + ' ' + rawBin.slice(8);
+
+    // 4. Вывод в HTML
+    const resDecInfo = document.getElementById('global-res-dec');
+    const resHexInfo = document.getElementById('global-res-hex');
+    const resBinInfo = document.getElementById('global-res-bin');
+
+    if (resDecInfo) resDecInfo.textContent = combinedValue;
+    if (resHexInfo) resHexInfo.textContent = `0x${hexStr}`;
+    if (resBinInfo) resBinInfo.textContent = binStr;
 }

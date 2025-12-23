@@ -1,42 +1,47 @@
+/* ОБЩИЙ СТИЛЬ ТАБЛИЦЫ */
 .state-table {
     display: grid;
-    grid-template-columns: 80px 120px 1fr;
-    /* gap: 8px; */
+    /* Логика для обычных таблиц (Memory, Flags, Marks):
+        1. Name: минимум 80px, иначе растягивается (1fr)
+        2. Addr: по ширине контента (auto)
+        3. Value: занимает все оставшееся место (1fr)
+    */
+    grid-template-columns: minmax(80px, 1fr) auto 1fr; 
+    
+    width: 100%; /* Таблица занимает всю ширину контейнера */
+    box-sizing: border-box; /* Учитываем границы в ширине */
+    
     border: 1px solid black;
     font-family: monospace;
-    font-size: 16px;
+    font-size: 14px; /* Чуть уменьшили шрифт для компактности */
     background-color: aliceblue;
+    margin-bottom: 10px;
+}
+
+/* СТИЛИ ЯЧЕЕК */
+.state-name, .state-data, .state-header {
+    padding: 4px;
+    border: 1px solid #ccc; /* Более мягкий цвет границ внутри */
+    
+    /* === ГЛАВНОЕ: ЗАЩИТА ОТ ВЫЛЕЗАНИЯ ТЕКСТА === */
+    white-space: pre-wrap;       /* Сохраняет пробелы, но разрешает перенос */
+    overflow-wrap: break-word;   /* Переносит длинные слова */
+    word-break: break-word;      /* Дополнительная страховка переноса */
+    hyphens: auto;               /* Расстановка переносов, если поддерживается */
+    font-weight: bold;
 }
 
 .state-name {
-    padding: 2px;
-    border: 1px solid black;
-    font-weight: bold;
+    /* font-weight: bold; */
+    background-color: #f0f8ff;
+    align-content: center; /* Вертикальное выравнивание */
 }
 
 .state-data {
-    padding: 2px;
-    border: 1px solid black;
     color: #0056b3;
-    font-weight: bold;
-}
-
-
-/* Специальная сетка для регистров: Name | Dec | Hex | Bin */
-#registry-table {
-    grid-template-columns: 60px 50px 40px 1fr; 
-}
-
-/* Выравнивание чисел по правому краю выглядит аккуратнее */
-.state-data {
-    text-align: right;
-    padding-right: 5px;
-}
-
-/* Уменьшаем шрифт для бинарного кода, чтобы влезло */
-.state-bin {
-    font-size: 14px;
-    letter-spacing: -1px; /* Слегка сжимаем, чтобы цифры стояли плотнее */
+    /* font-weight: bold; */
+    text-align: right; /* Числа равняем по правому краю */
+    align-content: center;
 }
 
 /* Заголовки колонок */
@@ -44,7 +49,24 @@
     background-color: #e0e0e0;
     font-weight: bold;
     text-align: center;
-    padding: 4px 0;
-    border-bottom: 2px solid #ccc;
-    font-size: 14px;
+    color: #333;
+    border-bottom: 2px solid #999;
+}
+
+
+/* === СПЕЦИАЛЬНАЯ СЕТКА ДЛЯ РЕГИСТРОВ === */
+/* Name | Dec | U-Dec | Hex | Bin */
+#registry-table {
+    /* 1. Name:  гибкое (min 60px)
+        2. Dec:   авто-ширина (min 40px)
+        3. U-Dec: авто-ширина (min 40px)
+        4. Hex:   авто-ширина (min 30px)
+        5. Bin:   остаток места (min 60px)
+    */
+    grid-template-columns: 
+        minmax(60px, 1fr) 
+        minmax(40px, auto) 
+        minmax(45px, auto) 
+        minmax(35px, auto) 
+        minmax(65px, 1fr);
 }

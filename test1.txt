@@ -1,8 +1,0 @@
-n 5
-array 3 2 1 4 2
-
-MOV reg1 0 0
-
-MOV reg2 0 0
-
-MOV_OFFSET reg3 array reg2

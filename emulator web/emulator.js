@@ -276,6 +276,8 @@ function updateFlags(last_command_result){
     let sf_code = getFlagCode("SF");
     if (sf_code) getFlagByCode(sf_code)[DB.value] = ((last_command_result < 0) ? 1 : 0);
 
+    // Carry Flag (CF) - обрабатывается в командах отдельно
+
     return last_command_result;
 }
 
@@ -295,9 +297,54 @@ function ADD(res_reg_code, reg1_code, reg2_code) {
     let val1 = getRegisterByCode(reg1_code)[DB.value];
     let val2 = getRegisterByCode(reg2_code)[DB.value];
     
+    // --- ЛОГИКА CARRY FLAG (CF) ---
+    // Преобразуем текущие знаковые значения (-128..127) в беззнаковые (0..255)
+    // Это изолирует логику CF от знака (SF), устраняя конфликт.
+    let u1 = val1 & 0xFF;
+    let u2 = val2 & 0xFF;
+    let uSum = u1 + u2;
+
+    // Если беззнаковая сумма не влезает в 8 бит (>255), ставим CF = 1
+    let cf_code = getFlagCode("CF");
+    if (cf_code) getFlagByCode(cf_code)[DB.value] = (uSum > 255) ? 1 : 0;
+
+    // --- ЛОГИКА РЕЗУЛЬТАТА И SF ---
+    // Обычное сложение для получения результата (сохраняем старую логику)
     let result = val1 + val2;
     
-    // Используем функцию записи в два регистра
+    // writeDoubleByteResult запишет результат и вызовет updateFlags(),
+    // который обновит SF и ZF, но не тронет наш установленный CF.
+    writeDoubleByteResult(res_reg_code, result);
+}
+
+// Функция сложения с учетом переноса (для старших байтов)
+function ADC(res_reg_code, reg1_code, reg2_code) {
+    let val1 = getRegisterByCode(reg1_code)[DB.value];
+    let val2 = getRegisterByCode(reg2_code)[DB.value];
+    
+    // 1. Получаем текущий Carry Flag
+    let cf_val = 0;
+    let cf_code = getFlagCode("CF");
+    if (cf_code) {
+        cf_val = getFlagByCode(cf_code)[DB.value];
+    }
+
+    // 2. Считаем сумму как беззнаковую для вычисления НОВОГО флага CF
+    // (Это работает верно и для отрицательных чисел в дополнительном коде)
+    let u1 = val1 & 0xFF;
+    let u2 = val2 & 0xFF;
+    let uSum = u1 + u2 + cf_val;
+
+    if (cf_code) {
+        // Если сумма > 255, значит "выпал" 9-й бит -> это перенос
+        getFlagByCode(cf_code)[DB.value] = (uSum > 255) ? 1 : 0;
+    }
+
+    // 3. Считаем знаковый результат для записи в регистр
+    let result = val1 + val2 + cf_val;
+    
+    // writeDoubleByteResult запишет число и обновит SF и ZF.
+    // SF здесь будет показывать ЗНАК ВСЕГО 16-БИТНОГО ЧИСЛА (так как это старший байт).
     writeDoubleByteResult(res_reg_code, result);
 }
 
@@ -306,16 +353,32 @@ function MUL(res_reg_code, reg1_code, reg2_code) {
     let val1 = getRegisterByCode(reg1_code)[DB.value];
     let val2 = getRegisterByCode(reg2_code)[DB.value];
     
-    // Умножаем
+    let u1 = val1 & 0xFF;
+    let u2 = val2 & 0xFF;
+    let uMul = u1 * u2;
+
+    let cf_code = getFlagCode("CF");
+    if (cf_code) getFlagByCode(cf_code)[DB.value] = (uMul > 255) ? 1 : 0;
+
     let result = val1 * val2;
     
-    // Записываем результат (Low -> res_reg, High -> EXT)
+    // Записываем результат и обновляем флаги
     writeDoubleByteResult(res_reg_code, result);
 }
 
 function CMP(placeholder, reg1_code, reg2_code) {
     let val1 = getRegisterByCode(reg1_code)[DB.value];
     let val2 = getRegisterByCode(reg2_code)[DB.value];
+
+    // --- ЛОГИКА ЗАИМСТВОВАНИЯ (CF в роли Borrow) ---
+    let u1 = val1 & 0xFF;
+    let u2 = val2 & 0xFF;
+    
+    let cf_code = getFlagCode("CF");
+    if (cf_code) {
+        // При вычитании (u1 - u2), если u1 < u2, происходит заимствование
+        getFlagByCode(cf_code)[DB.value] = (u1 < u2) ? 1 : 0;
+    }
     
     let result = val1 - val2;
     updateFlags(result); // Только обновляем флаги, результат не сохраняем

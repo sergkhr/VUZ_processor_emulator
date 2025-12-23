@@ -43,7 +43,17 @@
         </section>
 
         <aside id="state-panel">
-            <h3>PC: <span id="pc">0</span></h3>
+            <div class="status-row">
+                <h3>PC: <span id="pc">0</span></h3>
+                <div class="result-display">
+                    <span class="res-label">Result:</span>
+                    <span id="global-res-dec" title="Decimal">0</span>
+                    <span class="separator">|</span>
+                    <span id="global-res-hex" title="Hexadecimal">0x0000</span>
+                    <span class="separator">|</span>
+                    <span id="global-res-bin" title="Binary">0000 0000</span>
+                </div>
+            </div>
             <h3>Registers</h3>
             <div id="registry-table" class="state-table"></div>
             <h3>Flags</h3>

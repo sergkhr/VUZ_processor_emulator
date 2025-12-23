@@ -24,8 +24,76 @@ main {
 }
 
 h2, h3 {
-  /* border-bottom: 2px solid #007bff; */
-  padding-bottom: 5px;
-  /* margin-top: 20px; */
   margin-top: 5px;
+}
+
+/* === СТРОКА СТАТУСА (PC и Result) === */
+.status-row {
+    display: flex;
+    justify-content: space-between; /* PC слева, Result справа */
+    align-items: center;            /* Выравнивание по центру */
+    
+    margin-top: 5px;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #ccc; /* Нейтральная серая линия разделителя */
+}
+
+/* Убираем отступы у заголовка PC, чтобы он встал ровно */
+.status-row h3 {
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+}
+
+/* === СТИЛЬ БЛОКА РЕЗУЛЬТАТА === */
+.result-display {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Расстояние между элементами строки */
+    
+    /* Новое оформление: вместо зеленой заливки — рамка и легкий фон */
+    border: 1px solid #007bff;     /* Синяя рамка для акцента */
+    background-color: #f0f8ff;     /* Светло-голубой фон (AliceBlue), как у таблицы регистров */
+    /* border-radius: 4px;            Скругленные углы */
+    padding: 6px 12px;
+    
+    font-family: 'Courier New', monospace; /* Моноширинный шрифт для цифр */
+    font-size: 16px;
+    color: #333;
+    
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* Легкая тень для объема */
+}
+
+/* Заголовок "Result:" */
+.res-label {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    font-weight: bold;
+    color: #000;
+    margin-right: 4px;
+}
+
+/* === ЦВЕТОВАЯ КОДИРОВКА ЗНАЧЕНИЙ === */
+/* Соответствует цветам в таблице регистров */
+
+#global-res-dec {
+    font-weight: bold;
+    color: #000;       /* Черный для десятичного */
+}
+
+#global-res-hex {
+    color: #A0522D;    /* Коричневый (Sienna) для HEX */
+}
+
+#global-res-bin {
+    color: #006400;    /* Темно-зеленый для BIN */
+    font-size: 14px;   /* Чуть меньше, так как строка длинная */
+    letter-spacing: -0.5px;
+}
+
+/* Разделитель "|" */
+.separator {
+    color: #999;
+    font-weight: normal;
+    margin: 0 2px;
 }
