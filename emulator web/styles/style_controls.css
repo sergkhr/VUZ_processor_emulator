@@ -1,79 +1,140 @@
-.controls {
-    margin-bottom: 20px;
+/* === КНОПКИ И INPUT === */
+.controls-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+}
+
+.controls-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
 }
 
 button {
-    padding: 10px 15px;
-    font-size: 16px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
     border: none;
-    border-radius: 5px;
-    background-color: #007bff;
-    color: white;
+    border-radius: 4px;
     cursor: pointer;
-    margin-right: 10px;
+    transition: background 0.2s, transform 0.1s;
 }
 
-button:hover {
-    background-color: #0056b3;
-}
+button:active { transform: translateY(1px); }
+
+/* Цвета кнопок */
+.btn-primary { background-color: #007bff; color: white; }
+.btn-primary:hover { background-color: #0069d9; }
+
+.btn-secondary { background-color: #6c7d70; color: white; }
+.btn-secondary:hover { background-color: #6c7d70; }
+
+.btn-danger { background-color: #dc3545; color: white; }
+.btn-danger:hover { background-color: #c82333; }
 
 button:disabled {
-    background-color: #cccccc;
+    background-color: #e2e6ea;
+    color: #adb5bd;
     cursor: not-allowed;
+    transform: none;
 }
 
+/* Input скорости */
+.speed-group {
+    font-size: 14px;
+    color: var(--text-muted);
+}
 input[type="number"] {
-    padding: 8px;
-    font-size: 16px;
-    width: 80px;
+    padding: 6px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    width: 60px;
+    margin-left: 5px;
+}
+
+/* === ОКНО ВЫВОДА (Log) === */
+#output-container {
+    margin-bottom: 20px;
+}
+#output {
+    margin: 0;
+    padding: 10px;
+    background-color: #212529;
+    color: #00ff41; /* Hacker green text */
+    font-family: monospace;
+    font-size: 13px;
+    border-radius: var(--radius);
+    min-height: 40px;
+    white-space: pre-wrap;
+}
+
+/* === РЕДАКТОРЫ КОДА === */
+.code-container {
+    display: flex;
+    gap: 15px;
+    flex: 1;
+    min-height: 0; /* Важно для flex-контейнера */
+}
+
+.code-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .editor-wrapper {
     position: relative;
+    flex: 1;
+    border: 1px solid #333;
+    border-radius: var(--radius);
+    background-color: #2d2d2d; /* VS Code dark bg */
     overflow: hidden;
 }
 
+/* Общие стили для textarea и подсветки */
 #codeInput, #compileOutput, #highlighter-code, #highlighter-compile {
-    padding: 15px;
-    font-family: monospace;
-    font-size: 16px;
-    line-height: 21px; /* Фиксированная высота строки - это ключ к успеху */
-    border-radius: 5px;
-    box-sizing: border-box; /* Чтобы padding не влиял на общую ширину/высоту */
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 14px;
+    line-height: 20px; /* Фиксированная высота */
+    padding: 10px;
+    box-sizing: border-box;
 }
 
 #codeInput, #compileOutput {
-    position: relative; /* Чтобы быть над абсолютным элементом */
-    z-index: 1;         /* Размещаем над подсветкой */
     width: 100%;
-    min-height: 550px;
-    color: #f1f1f1;
-    border: 0px;
-    background-color: #2d2d2d;
+    height: 100%;
+    border: none;
+    background: transparent;
+    color: #f8f8f2;
+    resize: none;
+    position: relative;
+    z-index: 2;
     white-space: pre;
-    overflow: auto;
-    
-    caret-color: white;            /* Делаем курсор видимым на темном фоне */
+    outline: none;
 }
 
+/* Подсветка строки */
 #highlighter-code, #highlighter-compile {
-    position: absolute; /* Позиционируем относительно wrapper */
-    z-index: 2;         /* Размещаем под текстовым полем */
-    top: 0;             /* Начальная позиция */
+    position: absolute;
+    top: 0;
     left: 0;
     width: 100%;
-    height: 21px; /* Высота равна одной строке */
-    background-color: #41e75d4e;
-    transition: top 0.02s ease; /* Плавное движение */
-    display: none; /* Изначально подсветка скрыта */
-    padding: 0;
+    height: 20px; /* Равна line-height */
+    background-color: rgba(20, 255, 20, 0.15); /* Полупрозрачная подсветка */
+    z-index: 1;
+    display: none;
+    pointer-events: none;
+    padding: 0; /* Padding не нужен, т.к. мы позиционируем блок */
 }
 
-.code-container {
-    display: flex;
-    gap: 10px;
-}
-
-.code-wrapper {
-    flex-grow: 1;
-}
+/* Скроллбар для редакторов */
+textarea::-webkit-scrollbar { width: 8px; height: 8px; }
+textarea::-webkit-scrollbar-track { background: #2d2d2d; }
+textarea::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+textarea::-webkit-scrollbar-thumb:hover { background: #777; }

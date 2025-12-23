@@ -78,7 +78,7 @@ function updStTbl(register_type) {
 
             table.innerHTML += `
                 <div class="state-name">${name}</div>
-                <div class="state-data" style="color: black;">${decStr}</div>
+                <div class="state-data" style="color: #000000;">${decStr}</div>
                 <div class="state-data" style="color: #00008B;">${uDecStr}</div>
                 <div class="state-data" style="color: #A0522D;">${hexStr}</div>
                 <div class="state-data state-bin" style="color: #006400;">${binStr}</div>
@@ -138,8 +138,8 @@ function highlightCurrentLine(lineNumber) {
 
     const lineHeight_code = parseFloat(getComputedStyle(codeInput).lineHeight);
     const lineHeight_compile = parseFloat(getComputedStyle(compileOutput).lineHeight);
-    const newTop_code = lineNumber * lineHeight_code + 15; // padding-top=15
-    const newTop_compiler = lineNumber * lineHeight_compile + 15; // padding-top=15
+    const newTop_code = lineNumber * lineHeight_code + 10; // padding-top=10
+    const newTop_compiler = lineNumber * lineHeight_compile + 10; // padding-top=10
 
     highlighter_code.style.top = `${newTop_code}px`;
     highlighter_code.style.display = 'block';

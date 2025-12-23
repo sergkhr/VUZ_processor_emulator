@@ -5,63 +5,85 @@
     <link rel="stylesheet" href="styles/style_main.css">
     <link rel="stylesheet" href="styles/style_controls.css">
     <link rel="stylesheet" href="styles/style_tables.css">
-    <title>Assembler emulator (Vanilla JS)</title>
+    <title>Assembler Emulator</title>
 </head>
 <body>
     <main>
         <section id="control-panel">
-            <h2>Control panel</h2>
-            <div class="controls">
-                <button id="runBtn">Run</button>
-                <button id="stepBtn">Step</button>
-                <button id="resetBtn">Reset</button>
+            <div class="panel-header">
+                <h2>Control Panel</h2>
             </div>
-            <div class="controls">
-                <label for="speedInput">Steps by second:</label>
-                <input type="number" id="speedInput" min="0" value="2">
+            
+            <div class="controls-wrapper">
+                <div class="controls-group">
+                    <button id="runBtn" class="btn btn-primary">Run</button>
+                    <button id="stepBtn" class="btn btn-secondary">Step</button>
+                    <!-- <button id="resetBtn" class="btn btn-danger">Reset</button> -->
+                </div>
+                <div class="controls-group speed-group">
+                    <label for="speedInput">Speed (steps/sec):</label>
+                    <input type="number" id="speedInput" min="0" value="2">
+                </div>
             </div>
-            <pre id="output"></pre>
+            
+            <div id="output-container">
+                <pre id="output">Program ready.</pre>
+            </div>
 
             <div class="code-container">
-                <div class="code-wrapper">
-                    <h2>Assembly code</h2>
+                <div class="code-column">
+                    <h3>Source Code</h3>
                     <div class="editor-wrapper">
-                        <textarea id="codeInput" placeholder="Please, paste your assembly code here..."></textarea>
+                        <textarea id="codeInput" placeholder="Enter assembly code..."></textarea>
                         <div id="highlighter-code"></div>
                     </div>
                 </div>
                 
-                <div class="code-wrapper">
-                    <h2>Compiled code</h2>
+                <div class="code-column">
+                    <h3>Compiled Output</h3>
                     <div class="editor-wrapper">
-                        <textarea id="compileOutput" readonly placeholder="Wait for compiling code..."></textarea>
+                        <textarea id="compileOutput" readonly placeholder="Binary output..."></textarea>
                         <div id="highlighter-compile"></div>
                     </div>
                 </div>
             </div>
-            
         </section>
 
         <aside id="state-panel">
+            <div class="panel-header">
+                <h2>Processor State</h2>
+            </div>
+
             <div class="status-row">
-                <h3>PC: <span id="pc">0</span></h3>
+                <div class="pc-box">
+                    <span class="label">PC:</span>
+                    <span id="pc" class="value">0</span>
+                </div>
+                
                 <div class="result-display">
-                    <span class="res-label">Result:</span>
-                    <span id="global-res-dec" title="Decimal">0</span>
+                    <span class="res-label">RESULT</span>
                     <span class="separator">|</span>
-                    <span id="global-res-hex" title="Hexadecimal">0x0000</span>
+                    <span id="global-res-dec" class="res-val-dec" title="Decimal">0</span>
                     <span class="separator">|</span>
-                    <span id="global-res-bin" title="Binary">0000 0000</span>
+                    <span id="global-res-hex" class="res-val-hex" title="Hex">0x0000</span>
+                    <span class="separator">|</span>
+                    <span id="global-res-bin" class="res-val-bin" title="Binary">0000 0000</span>
                 </div>
             </div>
-            <h3>Registers</h3>
-            <div id="registry-table" class="state-table"></div>
-            <h3>Flags</h3>
-            <div id="flags-table" class="state-table"></div>
-            <h3>Marks</h3>
-            <div id="marks-table" class="state-table"></div>
-            <h3>Memory</h3>
-            <div id="memory-table" class="state-table"></div>
+
+            <div class="tables-container">
+                <h3>Registers</h3>
+                <div id="registry-table" class="state-table"></div>
+                
+                <h3>Flags</h3>
+                <div id="flags-table" class="state-table"></div>
+                
+                <h3>Marks</h3>
+                <div id="marks-table" class="state-table"></div>
+                
+                <h3>Memory</h3>
+                <div id="memory-table" class="state-table"></div>
+            </div>
         </aside>
     </main>
     
@@ -69,6 +91,5 @@
     <script src="emulator.js"></script>
     <script src="dicts.js"></script>
     <script src="visualisation.js"></script>
-    
 </body>
 </html>

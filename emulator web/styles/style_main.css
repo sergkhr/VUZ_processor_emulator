@@ -1,99 +1,108 @@
+:root {
+    --bg-app: #f4f6f8;
+    --bg-panel: #ffffff;
+    --primary-color: #007bff;
+    --text-main: #333333;
+    --text-muted: #666666;
+    --border-color: #e1e4e8;
+    --radius: 6px;
+    --shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  margin: 0;
-  padding: 20px;
-  background-color: #f4f4f4;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: var(--bg-app);
+    color: var(--text-main);
+    height: 100vh;
+    box-sizing: border-box;
 }
 
 main {
-  display: flex;
-  gap: 30px; /* Пространство между панелями */
+    display: flex;
+    gap: 20px;
+    height: calc(100vh - 40px); /* На всю высоту экрана */
+}
+
+/* === ОБЩИЕ СТИЛИ ПАНЕЛЕЙ === */
+#control-panel, #state-panel {
+    background-color: var(--bg-panel);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Чтобы скролл был внутри */
 }
 
 #control-panel {
-  flex: 2; /* Панель управления занимает 2/3 ширины */
+    flex: 2;
+    padding: 20px;
 }
 
 #state-panel {
-  flex: 1; /* Панель состояния занимает 1/3 ширины */
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  align-self: flex-start; /* Прилипает к верху */
+    flex: 1;
+    padding: 20px;
+    background-color: #fafbfc; /* Чуть темнее белого для контраста */
+    border-left: 1px solid var(--border-color);
+    overflow-y: auto; /* Скролл только у правой панели если длинная */
 }
 
-h2, h3 {
-  margin-top: 5px;
+h2 {
+    margin: 0 0 15px 0;
+    font-size: 18px;
+    color: var(--text-main);
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 8px;
+    display: inline-block;
 }
 
-/* === СТРОКА СТАТУСА (PC и Result) === */
+h3 {
+    margin: 5px 0 5px 0;
+    font-size: 14px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+/* === СТРОКА СТАТУСА (PC и RESULT) === */
 .status-row {
     display: flex;
-    justify-content: space-between; /* PC слева, Result справа */
-    align-items: center;            /* Выравнивание по центру */
-    
-    margin-top: 5px;
-    margin-bottom: 15px;
-    padding-bottom: 8px;
-    border-bottom: 2px solid #ccc; /* Нейтральная серая линия разделителя */
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
 }
 
-/* Убираем отступы у заголовка PC, чтобы он встал ровно */
-.status-row h3 {
-    margin: 0;
-    padding: 0;
-    white-space: nowrap;
+/* Блок PC */
+.pc-box {
+    font-family: monospace;
+    font-size: 16px;
 }
+.pc-box .label { font-weight: bold; color: var(--text-muted); }
+.pc-box .value { font-weight: bold; color: var(--primary-color); font-size: 18px; margin-left: 5px;}
 
-/* === СТИЛЬ БЛОКА РЕЗУЛЬТАТА === */
+/* Блок RESULT (Переработанный) */
 .result-display {
     display: flex;
     align-items: center;
-    gap: 8px; /* Расстояние между элементами строки */
-    
-    /* Новое оформление: вместо зеленой заливки — рамка и легкий фон */
-    border: 1px solid #007bff;     /* Синяя рамка для акцента */
-    background-color: #f0f8ff;     /* Светло-голубой фон (AliceBlue), как у таблицы регистров */
-    /* border-radius: 4px;            Скругленные углы */
-    padding: 6px 12px;
-    
-    font-family: 'Courier New', monospace; /* Моноширинный шрифт для цифр */
-    font-size: 16px;
-    color: #333;
-    
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* Легкая тень для объема */
+    gap: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
 }
 
-/* Заголовок "Result:" */
 .res-label {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
     font-weight: bold;
-    color: #000;
-    margin-right: 4px;
+    color: var(--text-muted);
+    font-size: 12px;
 }
 
-/* === ЦВЕТОВАЯ КОДИРОВКА ЗНАЧЕНИЙ === */
-/* Соответствует цветам в таблице регистров */
+.separator { color: #ddd; }
 
-#global-res-dec {
-    font-weight: bold;
-    color: #000;       /* Черный для десятичного */
-}
-
-#global-res-hex {
-    color: #A0522D;    /* Коричневый (Sienna) для HEX */
-}
-
-#global-res-bin {
-    color: #006400;    /* Темно-зеленый для BIN */
-    font-size: 14px;   /* Чуть меньше, так как строка длинная */
-    letter-spacing: -0.5px;
-}
-
-/* Разделитель "|" */
-.separator {
-    color: #999;
-    font-weight: normal;
-    margin: 0 2px;
-}
+.res-val-dec { font-weight: bold; color: #333; }
+.res-val-hex { color: #A0522D; } /* Sienna */
+.res-val-bin { color: #006400; font-size: 12px; letter-spacing: -0.5px; }
