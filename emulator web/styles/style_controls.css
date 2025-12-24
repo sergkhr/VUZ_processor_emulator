@@ -126,7 +126,7 @@ input[type="number"] {
     left: 0;
     width: 100%;
     height: 20px; /* Равна line-height */
-    background-color: rgba(20, 255, 20, 0.15); /* Полупрозрачная подсветка */
+    background-color: rgba(124, 255, 0, 0.3); /* Полупрозрачная подсветка */
     z-index: 1;
     display: none;
     pointer-events: none;
